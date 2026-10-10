@@ -122,3 +122,8 @@ Results in the sandbox: **lint ✅, build ✅, Vitest 144/144 ✅** (unit tests,
 - New tables not listed in SPEC §11: `saved_views` (you approved it), plus `imports` and `contact_activity`.
 - Merging and imports are owner-only. Team members can add, edit, tag and note contacts.
 - Undoing an import also deletes any contact that was later merged into a contact the import created.
+
+### Fix: CSV import "Couldn't check the file" (2026-10-10)
+- **Cause:** the import actions checked each row with `z.record(z.enum(...))`. In Zod 4 that requires *every* field to be present, so every real CSV was rejected at the check step. Nothing was written.
+- **Fix:** switched to `z.partialRecord`. The checks moved to `lib/contacts/import-schemas.ts`, and a new `tests/unit/import-schemas.test.ts` feeds real GoHighLevel-shaped rows through the server's checks.
+- The check step now shows a readable reason when it fails, such as "the database update wasn't run", instead of a generic error.

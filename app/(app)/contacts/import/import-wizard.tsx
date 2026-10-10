@@ -15,7 +15,7 @@ import {
   type StageMapping,
 } from "@/lib/contacts/import-mapping";
 import type { RowIssue } from "@/lib/contacts/import-server";
-import { finishImport, previewBatch, runImportBatch, startImport, type PreviewRow } from "./actions";
+import { finishImport, previewBatch, runImportBatch, startImport } from "./actions";
 
 const BATCH = 250;
 const MAX_ROWS = 50_000;
@@ -111,8 +111,13 @@ export function ImportWizard({ stages }: { stages: { key: string; name: string }
       const seen = new Set<string>();
       const parts = batches(rows);
       for (let i = 0; i < parts.length; i++) {
-        const res: PreviewRow[] = await previewBatch({ rows: parts[i], stageMapping, startRow: 2 + i * BATCH });
-        for (const r of res) {
+        const res = await previewBatch({ rows: parts[i], stageMapping, startRow: 2 + i * BATCH });
+        if (!res.ok) {
+          setError(res.error);
+          setStep("map");
+          return;
+        }
+        for (const r of res.rows) {
           for (const w of r.warnings) result.warnings.push({ row: r.row, message: w });
           if (r.status === "error") result.errors.push({ row: r.row, message: r.message ?? "Invalid row" });
           else if (r.keys.some((k) => seen.has(k))) result.inFile++;
@@ -124,7 +129,7 @@ export function ImportWizard({ stages }: { stages: { key: string; name: string }
       }
       setPreview(result);
     } catch {
-      setError("Couldn't check the file. Try again.");
+      setError("Couldn't check the file: the connection dropped. Try again.");
       setStep("map");
     }
   }

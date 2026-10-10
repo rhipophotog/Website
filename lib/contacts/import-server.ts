@@ -6,7 +6,7 @@ import { defaultPipelineId, ensureTagIds, tagContacts } from "./queries";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-export const IMPORT_BATCH_SIZE = 250;
+export { IMPORT_BATCH_SIZE } from "./import-schemas";
 export const MAX_STORED_ERRORS = 500;
 
 export type RowIssue = { row: number; message: string };
