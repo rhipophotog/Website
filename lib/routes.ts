@@ -8,11 +8,11 @@ const PUBLIC_PREFIXES = [
   "/u/", // signed unsubscribe links
 ];
 
-const PUBLIC_FILES = ["/manifest.webmanifest", "/icon.svg", "/apple-icon", "/favicon.ico", "/robots.txt", "/embed.js"];
+const PUBLIC_FILES = ["/manifest.webmanifest", "/icon.png", "/apple-icon.png", "/favicon.ico", "/robots.txt", "/embed.js"];
 
 export function isPublicPath(pathname: string): boolean {
   if (PUBLIC_FILES.includes(pathname)) return true;
-  if (pathname.startsWith("/pwa-icon/")) return true;
+  if (pathname.startsWith("/brand/")) return true;
   return PUBLIC_PREFIXES.some((prefix) =>
     prefix.endsWith("/") ? pathname.startsWith(prefix) : pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
@@ -27,7 +27,7 @@ export function safeNextPath(next: string | null | undefined, fallback = "/"): s
   return next;
 }
 
-export type NavItem = { href: string; label: string; icon: "dashboard" | "inbox" | "pipeline" | "contacts" | "calendar" | "settings" };
+export type NavItem = { href: string; label: string; icon: "dashboard" | "inbox" | "pipeline" | "contacts" | "calendar" | "workflows" | "settings" };
 
 /** Bottom tabs on phones, sidebar on desktop (SPEC §14.1). */
 export const PRIMARY_NAV: NavItem[] = [
@@ -38,6 +38,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { href: "/calendar", label: "Calendar", icon: "calendar" },
 ];
 
+export const WORKFLOWS_NAV: NavItem = { href: "/workflows", label: "Workflows", icon: "workflows" };
 export const SETTINGS_NAV: NavItem = { href: "/settings", label: "Settings", icon: "settings" };
 
 export function isActive(href: string, pathname: string): boolean {

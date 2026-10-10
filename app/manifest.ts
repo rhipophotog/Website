@@ -1,18 +1,19 @@
 import type { MetadataRoute } from "next";
+import { APP_NAME, STUDIO_NAME } from "@/lib/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "RHIPO Studio",
-    short_name: "RHIPO",
-    description: "Leads, pipeline, inbox and bookings for RHIPO Photography & Cinematography",
+    name: APP_NAME,
+    short_name: APP_NAME,
+    description: `Leads, pipeline, inbox and bookings for ${STUDIO_NAME}`,
     start_url: "/",
     display: "standalone",
-    background_color: "#12100d",
-    theme_color: "#17140f",
+    background_color: "#F9FAFB",
+    theme_color: "#1570EF",
     icons: [
-      { src: "/pwa-icon/192", sizes: "192x192", type: "image/png" },
-      { src: "/pwa-icon/512", sizes: "512x512", type: "image/png" },
-      { src: "/pwa-icon/512", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/brand/icon-192.png", sizes: "192x192", type: "image/png" },
+      { src: "/brand/icon-512.png", sizes: "512x512", type: "image/png" },
+      { src: "/brand/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }

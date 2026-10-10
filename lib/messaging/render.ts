@@ -53,12 +53,12 @@ export function textToHtml(text: string, footerHtml = ""): string {
     .split(/\n{2,}/)
     .map((p) =>
       escapeHtml(p)
-        .replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"]/g, (url) => `<a href="${url}" style="color:#9a7740">${url}</a>`)
+        .replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"]/g, (url) => `<a href="${url}" style="color:#1570EF">${url}</a>`)
         .replace(/\n/g, "<br>"),
     )
     .map((p) => `<p style="margin:0 0 16px">${p}</p>`)
     .join("");
-  return `<div style="font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.6;color:#17140f;max-width:600px">${paragraphs}${footerHtml}</div>`;
+  return `<div style="font-family:Inter,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;line-height:1.6;color:#101828;max-width:600px">${paragraphs}${footerHtml}</div>`;
 }
 
 /** "Wed, Jun 14, 2027" style date for an ISO calendar date. */

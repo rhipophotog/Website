@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { APP_NAME } from "@/lib/brand";
 import { serverEnv } from "@/lib/env";
 import { notifyOwner } from "@/lib/messaging/email";
 import { getReceivedEmail } from "@/lib/messaging/inbound";
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
       if (!result.duplicate_delivery) {
         await notifyOwner(
           `Reply from ${from.name ?? from.address}: ${email.subject ?? "(no subject)"}`,
-          `${stripQuotedReply(text).slice(0, 4000)}\n\n—\nReply from RHIPO Studio so it stays in their thread.`,
+          `${stripQuotedReply(text).slice(0, 4000)}\n\n—\nReply from ${APP_NAME} so it stays in their thread.`,
           `owner-reply:${event.data.email_id}`,
         );
       }

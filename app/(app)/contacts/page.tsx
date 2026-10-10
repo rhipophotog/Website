@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { ButtonLink, Notice, Pill } from "@/components/ui";
+import { ButtonLink, Notice, Pill, StageChip } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { SOURCES, sourceLabel } from "@/lib/contacts/fields";
 import { formatPhone } from "@/lib/contacts/phone";
@@ -165,9 +165,7 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 md:flex-1">
                   {c.stage_keys.map((k) => (
-                    <Pill key={k} tone={k === "lost" ? "danger" : "accent"}>
-                      {stageName.get(k) ?? k}
-                    </Pill>
+                    <StageChip key={k} stageKey={k} name={stageName.get(k) ?? k} />
                   ))}
                   {c.tag_names.slice(0, 4).map((t) => (
                     <Pill key={t}>{t}</Pill>

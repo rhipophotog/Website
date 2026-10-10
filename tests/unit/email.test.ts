@@ -45,7 +45,7 @@ describe("textToHtml", () => {
   it("escapes HTML, keeps paragraphs and line breaks, and links URLs", () => {
     const html = textToHtml("Hi <b>Priya</b> & Rohan\nsecond line\n\nSee https://rhipo.example/work.");
     expect(html).toContain("Hi &lt;b&gt;Priya&lt;/b&gt; &amp; Rohan<br>second line");
-    expect(html).toContain('<a href="https://rhipo.example/work" style="color:#9a7740">https://rhipo.example/work</a>.');
+    expect(html).toContain('<a href="https://rhipo.example/work" style="color:#1570EF">https://rhipo.example/work</a>.');
     expect(html.match(/<p /g)).toHaveLength(2);
     expect(html).not.toContain("<b>");
   });

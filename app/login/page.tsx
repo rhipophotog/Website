@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Logo } from "@/components/Logo";
 import { getCurrentUser } from "@/lib/auth";
+import { APP_NAME } from "@/lib/brand";
 import { publicEnv } from "@/lib/env";
 import { safeNextPath } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
@@ -31,10 +33,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <main className="flex min-h-dvh items-center justify-center px-5 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-ink font-serif text-2xl font-bold text-accent">
-            R
-          </div>
-          <h1 className="text-xl font-semibold">RHIPO Studio</h1>
+          <Logo size={48} className="mx-auto mb-4" />
+          <h1 className="text-2xl font-extrabold tracking-tight">{APP_NAME}</h1>
           <p className="mt-1 text-sm text-muted">Sign in to the studio CRM</p>
         </div>
 

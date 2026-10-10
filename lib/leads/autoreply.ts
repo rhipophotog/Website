@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/brand";
 import { emailContact, notifyOwner } from "@/lib/messaging/email";
 import { buildMergeContext } from "@/lib/messaging/render";
 import type { AdminClient } from "@/lib/supabase/admin";
@@ -22,7 +23,7 @@ export async function afterLeadCaptured(admin: AdminClient, result: CaptureResul
   const name = [contact.first_name, contact.last_name].filter(Boolean).join(" ") || "Someone";
   await notifyOwner(
     `New inquiry: ${name} (${sourceLabel})`,
-    `${name} just sent an inquiry via ${sourceLabel}.\n\nOpen it in RHIPO Studio to see the details.`,
+    `${name} just sent an inquiry via ${sourceLabel}.\n\nOpen it in ${APP_NAME} to see the details.`,
     `owner-lead:${result.submission_id}`,
   );
 

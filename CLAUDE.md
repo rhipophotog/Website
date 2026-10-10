@@ -1,6 +1,6 @@
 # CLAUDE.md — RHIPO Studio CRM
 
-A private CRM for RHIPO Photography & Cinematography that replaces the parts of GoHighLevel the studio uses: leads, pipeline, inbox (email + SMS), booking calendar, and automations. **Read `SPEC.md` and `WORKFLOWS.md` first; they are the source of truth.**
+A private CRM for RHIPO Photography & Cinematography that replaces the parts of GoHighLevel the studio uses: leads, pipeline, inbox (email + SMS), booking calendar, and automations. **Read `SPEC.md` and `WORKFLOWS.md` first; they are the source of truth.** Look and logo: `BRAND.md` (logo files in `brand/`). The product name isn't final: always use `APP_NAME` from `lib/brand.ts`.
 
 ## How to work
 - Build one milestone from `SPEC.md` §14 at a time. Show the plan before coding. Don't start the next milestone until tests pass.

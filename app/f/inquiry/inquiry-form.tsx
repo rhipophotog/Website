@@ -38,7 +38,7 @@ export function InquiryForm({ consentText, siteKey, embedded }: { consentText: s
   if (state?.ok) {
     return (
       <div ref={rootRef} role="status" className="rounded-2xl border border-line bg-surface p-8 text-center">
-        <p className="font-serif text-2xl">Thank you!</p>
+        <p className="text-2xl font-extrabold">Thank you!</p>
         <p className="mt-2 text-muted">
           We&apos;ve got your inquiry and will be in touch very soon. Congratulations on your wedding!
         </p>

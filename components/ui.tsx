@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { stageColor } from "@/lib/brand";
 import type { ComponentProps, ReactNode } from "react";
 
 export function Card({ title, actions, children, className = "" }: { title?: string; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-xl border border-line bg-surface p-4 md:p-5 ${className}`}>
+    <section className={`rounded-xl border border-gray-200 bg-white p-4 shadow-card md:p-5 ${className}`}>
       {(title || actions) && (
         <div className="mb-3 flex items-center justify-between gap-3">
           {title && <h2 className="font-semibold">{title}</h2>}
@@ -16,7 +17,7 @@ export function Card({ title, actions, children, className = "" }: { title?: str
 }
 
 export function Pill({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "accent" | "danger" }) {
-  const styles = { neutral: "bg-line/70 text-ink", accent: "bg-accent/15 text-accent", danger: "bg-danger/10 text-danger" }[tone];
+  const styles = { neutral: "bg-gray-50 text-gray-900 ring-1 ring-gray-200", accent: "bg-primary-50 text-primary-700", danger: "bg-error-600/10 text-error-600" }[tone];
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${styles}`}>{children}</span>;
 }
 
@@ -33,5 +34,15 @@ export function Notice({ children, tone = "neutral" }: { children: ReactNode; to
     >
       {children}
     </p>
+  );
+}
+
+/** Stage chip: coloured dot + name (BRAND.md stage colours; never colour alone). */
+export function StageChip({ stageKey, name }: { stageKey: string; name: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-900 ring-1 ring-gray-200">
+      <span aria-hidden className="size-2 rounded-full" style={{ background: stageColor(stageKey) }} />
+      {name}
+    </span>
   );
 }

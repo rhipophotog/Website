@@ -50,10 +50,11 @@ test.describe("signed out", () => {
   test("the app can be installed: manifest and icons are public", async ({ request }) => {
     const manifest = await request.get("/manifest.webmanifest");
     expect(manifest.ok()).toBe(true);
-    expect(await manifest.json()).toMatchObject({ name: "RHIPO Studio", display: "standalone" });
+    expect(await manifest.json()).toMatchObject({ name: "RHIPO Studio", display: "standalone", theme_color: "#1570EF" });
 
-    const icon = await request.get("/pwa-icon/192");
-    expect(icon.headers()["content-type"]).toBe("image/png");
-    expect((await request.get("/pwa-icon/13")).status()).toBe(404);
+    for (const path of ["/brand/icon-192.png", "/brand/icon-512.png", "/brand/icon-maskable-512.png", "/apple-icon.png", "/icon.png"]) {
+      const icon = await request.get(path);
+      expect(icon.headers()["content-type"], path).toBe("image/png");
+    }
   });
 });

@@ -1,45 +1,77 @@
 @import "tailwindcss";
 
-/* RHIPO Studio palette. Neutral ink + warm paper, gold accent. */
+/* Brand tokens (BRAND.md §2). Bright, clean, light UI. */
 :root {
-  --paper: #faf8f5;
-  --surface: #ffffff;
-  --ink: #17140f;
-  --muted: #6b645a;
-  --line: #e7e2da;
-  --accent: #9a7740;
-  --accent-ink: #ffffff;
-  --danger: #b42318;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #12100d;
-    --surface: #1c1915;
-    --ink: #f3efe8;
-    --muted: #a39b8f;
-    --line: #2e2a24;
-    --accent: #c9a46a;
-    --accent-ink: #17140f;
-    --danger: #f97066;
-  }
+  --primary-50: #eff8ff;
+  --primary-600: #1570ef;
+  --primary-700: #175cd3;
+  --accent-yellow: #fdb022;
+  --accent-green: #32d583;
+  --success-600: #12b76a;
+  --success-text: #027a48;
+  --warning-500: #f79009;
+  --warning-text: #b54708;
+  --error-600: #d92d20;
+  --gray-900: #101828;
+  --gray-600: #475467;
+  --gray-200: #e4e7ec;
+  --gray-50: #f9fafb;
 }
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-surface: var(--surface);
-  --color-ink: var(--ink);
-  --color-muted: var(--muted);
-  --color-line: var(--line);
-  --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-danger: var(--danger);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-primary-50: var(--primary-50);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-accent-yellow: var(--accent-yellow);
+  --color-accent-green: var(--accent-green);
+  --color-success-600: var(--success-600);
+  --color-success-text: var(--success-text);
+  --color-warning-500: var(--warning-500);
+  --color-warning-text: var(--warning-text);
+  --color-error-600: var(--error-600);
+  --color-gray-900: var(--gray-900);
+  --color-gray-600: var(--gray-600);
+  --color-gray-200: var(--gray-200);
+  --color-gray-50: var(--gray-50);
+
+  /* Semantic aliases used across the app, mapped onto the brand palette. */
+  --color-paper: var(--gray-50);
+  --color-surface: #ffffff;
+  --color-ink: var(--gray-900);
+  --color-muted: var(--gray-600);
+  --color-line: var(--gray-200);
+  --color-accent: var(--primary-600);
+  --color-accent-ink: #ffffff;
+  --color-danger: var(--error-600);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
 
 body {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--gray-50);
+  color: var(--gray-900);
   font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
   -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 768px) {
+  body {
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+/* Dashboards and money: tabular figures. */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }

@@ -13,7 +13,7 @@ export default async function UnsubscribePage({ params }: PageProps<"/u/[token]"
   return (
     <main className="flex min-h-dvh items-center justify-center px-5">
       <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-6 text-center">
-        <h1 className="font-serif text-2xl">Email preferences</h1>
+        <h1 className="text-2xl font-extrabold">Email preferences</h1>
         {valid ? (
           <UnsubscribeButton token={token} />
         ) : (

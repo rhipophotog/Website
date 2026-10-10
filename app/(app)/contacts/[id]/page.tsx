@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
-import { ButtonLink, Card, Notice, Pill } from "@/components/ui";
+import { ButtonLink, Card, Notice, Pill, StageChip } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { CONSENT_SOURCES, EVENT_TYPES, LOST_REASONS, sourceLabel } from "@/lib/contacts/fields";
 import { formatPhone } from "@/lib/contacts/phone";
@@ -174,7 +174,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                     <li key={o.id} className="py-3 first:pt-0 last:pb-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <Link href={`/pipeline/${o.id}`} className="font-medium underline">{o.couple_names ?? contact.display_name}</Link>
-                        <Pill tone={o.stage_key === "lost" ? "danger" : "accent"}>{stageName.get(o.stage_key) ?? o.stage_key}</Pill>
+                        <StageChip stageKey={o.stage_key} name={stageName.get(o.stage_key) ?? o.stage_key} />
                         {o.status === "lost" && o.lost_reason && <Pill tone="danger">{LOST_REASONS.find((r) => r.key === o.lost_reason)?.label}</Pill>}
                       </div>
                       <p className="mt-1 text-sm text-muted">

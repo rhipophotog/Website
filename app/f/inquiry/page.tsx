@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Logo } from "@/components/Logo";
+import { STUDIO_NAME } from "@/lib/brand";
 import { publicEnv } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { InquiryForm } from "./inquiry-form";
@@ -23,9 +25,9 @@ export default async function InquiryPage({ searchParams }: PageProps<"/f/inquir
       <div className="mx-auto w-full max-w-xl">
         {!embedded && (
           <header className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-ink font-serif text-2xl font-bold text-accent">R</div>
-            <h1 className="font-serif text-3xl">Tell us about your wedding</h1>
-            <p className="mt-2 text-muted">RHIPO Photography &amp; Cinematography. We usually reply within a few hours.</p>
+            <Logo size={48} className="mx-auto mb-4" />
+            <h1 className="text-3xl font-extrabold tracking-tight">Tell us about your wedding</h1>
+            <p className="mt-2 text-muted">{STUDIO_NAME}. We usually reply within a few hours.</p>
           </header>
         )}
         {form?.enabled ? (

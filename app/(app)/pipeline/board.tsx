@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { LOST_REASONS, sourceLabel } from "@/lib/contacts/fields";
+import { stageColor } from "@/lib/brand";
 import { buildColumns, formatMoney, moveCard, timeInStage, type Card, type Stage } from "@/lib/pipeline/board";
 import { moveOpportunity } from "./actions";
 
@@ -61,13 +62,13 @@ export function Board({ stages, cards }: { stages: Stage[]; cards: Card[] }) {
         setDragging(null);
         if (card) requestMove(card, col.stage.key);
       }}
-      className={`flex max-h-[calc(100dvh-14rem)] w-[85vw] max-w-72 shrink-0 snap-start flex-col rounded-xl border bg-surface sm:w-72 ${
+      className={`flex max-h-[calc(100dvh-14rem)] w-[85vw] max-w-72 shrink-0 snap-start flex-col rounded-xl border bg-gray-50 sm:w-72 ${
         dropTarget === col.stage.key ? "border-accent ring-2 ring-accent/30" : "border-line"
       }`}
     >
       <header className="flex items-baseline justify-between gap-2 border-b border-line px-3 py-2">
-        <h2 className="text-sm font-semibold">
-          {col.stage.kind === "open" && <span className="mr-1.5 text-muted">{col.stage.position}</span>}
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: stageColor(col.stage.key) }} />
           {col.stage.name} <span className="font-normal text-muted">({col.count})</span>
         </h2>
         {col.totalCents > 0 && <span className="text-xs text-muted">{formatMoney(col.totalCents)}</span>}
@@ -87,7 +88,7 @@ export function Board({ stages, cards }: { stages: Stage[]; cards: Card[] }) {
               setDragging(null);
               setDropTarget(null);
             }}
-            className={`rounded-lg border border-line bg-paper p-3 text-sm shadow-sm md:cursor-grab ${dragging === card.id ? "opacity-50" : ""}`}
+            className={`rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-card md:cursor-grab ${dragging === card.id ? "opacity-50" : ""}`}
           >
             <Link href={`/pipeline/${card.id}`} className="block font-medium hover:underline">
               {card.couple_names ?? [card.contact_name, card.partner_name].filter(Boolean).join(" & ")}

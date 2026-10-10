@@ -17,8 +17,8 @@ export function SidebarLinks({ items }: { items: NavItem[] }) {
             <Link
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                active ? "bg-ink text-paper" : "text-muted hover:bg-line/60 hover:text-ink"
+              className={`flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
+                active ? "bg-primary-50 text-primary-600" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <NavIcon name={item.icon} />
@@ -44,10 +44,10 @@ export function BottomTabs({ items }: { items: NavItem[] }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${
-                active ? "text-accent" : "text-muted"
+                active ? "text-primary-600" : "text-gray-600"
               }`}
             >
-              <NavIcon name={item.icon} className="size-6" />
+              <NavIcon name={item.icon} size={22} />
               {item.label}
             </Link>
           </li>
