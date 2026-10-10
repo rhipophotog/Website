@@ -73,3 +73,52 @@ Results in the build sandbox: **lint ✅, build ✅, Vitest 64/64 ✅, Playwrigh
   - **Hosted Supabase:** templates can only be edited once custom SMTP is set up. Until then the email has only a link, so the code field is folded away under "Email has a 6-digit code instead?". After SMTP is set up (milestone 5, or sooner), paste the template into Authentication → Emails, under both **Magic Link** and **Confirm signup**.
 - **Clear message for bad links.** A used or expired link that Supabase sends back to any page now goes to `/login`, which explains what happened, instead of silently redirecting.
 - Tests: Vitest 64/64, Playwright 20 passed, 4 skipped (signed-in tests, Supabase not available in the sandbox).
+
+## Milestone 2 — Contacts + CSV import/export ✅ (2026-10-10)
+
+### What was built
+- **Contacts list** (`/contacts`):
+  - Search by name, partner, email or phone.
+  - Filters for tag, stage, source and event month.
+  - **Saved views**, personal or shared with the team.
+  - Cards on a phone, wider rows on desktop.
+  - Pages of 50.
+- **Quick add** (`/contacts/new`):
+  - Phone numbers are converted to international format (E.164) with `libphonenumber-js`.
+  - Tags, plus an optional "add to pipeline as a new inquiry" with wedding date, type and venue.
+  - **Dedupe:** if the email or phone already exists, blanks on that record are filled in and the tags and opportunity are added to it instead of creating a duplicate.
+- **Contact page** (`/contacts/[id]`):
+  - Details, tags (add and remove), opportunities, edit form and messaging switches (marketing email, do-not-email, do-not-text, stop automations).
+  - **Recording SMS consent or opt-out** with channel, method and the exact wording. Consent history can only be added to.
+  - Internal notes.
+  - The **activity timeline**: added, imported, edited fields, tags, pipeline moves, consent, merges.
+- **Duplicates and merge** (owner): `/contacts/duplicates` lists contacts that share an email or phone. `/contacts/merge` lets you pick the surviving record and the value for each conflicting field.
+  - Tags, notes (anyone's), opportunities, consent records and history are all moved across in one database transaction.
+  - Do-not-text, do-not-email and stop-automations are kept if either record had them.
+- **CSV import** (owner, `/contacts/import`): upload, match columns, check, import.
+  - GoHighLevel contact and opportunity exports are recognised and their columns matched automatically. Pipeline stages are guessed and can be changed.
+  - Rows are sent to the server in batches of 250 and every batch is re-checked there.
+  - Existing contacts are **never overwritten**; blanks are filled in and tags added.
+  - Re-importing the same file doesn't duplicate opportunities that carry a GoHighLevel id.
+  - Imported contacts get **no SMS consent**.
+  - Each import gets a record at `/contacts/imports/[id]` listing skipped rows, with **Undo**, which deletes only the contacts that import created.
+- **CSV export** (owner, `/contacts/export`): written to the audit log, and protected against spreadsheet formula injection.
+- **Permanent delete** (owner): you type DELETE to confirm. It removes notes, opportunities, consent and history. The audit entry keeps the id but no name or email.
+- **Database** (`20261010000000_contacts.sql`):
+  - New tables: `tags`, `contact_tags`, `consents`, `messages` (notes only for now), `contact_activity` (written only by triggers), `imports`, `saved_views`.
+  - Views: `contact_list` and `contact_duplicates`, which follow the same access rules as the tables they read.
+  - Functions: `merge_contacts` (owner only) and `find_contacts_for_import`.
+  - New columns `contacts.ghl_contact_id`, `contacts.import_id` and `opportunities.ghl_opportunity_id`. Nothing was dropped or renamed.
+
+### How to try it
+- **Hosted Supabase:** open SQL Editor and run `supabase/migrations/20261010000000_contacts.sql`, the same way as the first migration.
+- **Sample file:** `tests/e2e/fixtures/ghl-opportunities-sample.csv` is a fake GoHighLevel export to practise the import with. Undo it afterwards from the import record.
+
+Results in the sandbox: **lint ✅, build ✅, Vitest 144/144 ✅** (unit tests, plus 39 database and access-rule tests on Postgres 16 with the auth shim), **Playwright 26 passed, 8 skipped**.
+- The 8 skipped are the signed-in journeys: quick add with dedupe, notes, and a GoHighLevel import. They need local Supabase.
+- The import code that writes to Supabase was **not** run against a real Supabase API here. Its matching rules are unit-tested, and its SQL (upserts, the lookup function, triggers) is tested directly in Postgres.
+
+### Open questions
+- New tables not listed in SPEC §11: `saved_views` (you approved it), plus `imports` and `contact_activity`.
+- Merging and imports are owner-only. Team members can add, edit, tag and note contacts.
+- Undoing an import also deletes any contact that was later merged into a contact the import created.

@@ -1,0 +1,6 @@
+Opportunity Name,Contact Name,phone,email,pipeline,stage,Lead Value,source,assigned,Created on,Updated on,lost reason ID,lost reason name,Followers,Notes,tags,status,Opportunity ID,Contact ID,Pipeline Stage ID,Pipeline ID
+Priya & Rohan,Priya Sharma,(415) 555-0101,priya.e2e@example.com,Weddings,New Lead,"$12,000",Instagram,,2026-08-01,2026-08-02,,,,"Loves candid shots, 3-day wedding","VIP, 2027",open,opp_e2e_1,c_e2e_1,s1,p1
+Anika & Dev,Anika Rao,+91 98765 43210,anika.e2e@example.com,Weddings,Booked,"$18,500",Facebook Lead Ad,,2026-07-15,2026-09-01,,,,,"2027",won,opp_e2e_2,c_e2e_2,s2,p1
+Meera & Sam,Meera Patel,555,meera.e2e@example.com,Weddings,Closed Lost,$9000,Google,,2026-06-01,2026-06-20,lr1,Over budget,,,,lost,opp_e2e_3,c_e2e_3,s3,p1
+Priya again,Priya Sharma,415-555-0101,PRIYA.E2E@example.com,Weddings,New Lead,,Instagram,,2026-08-03,,,,,,sangeet,open,opp_e2e_4,c_e2e_1,s1,p1
+,,,,Weddings,New Lead,,,,,,,,,,,open,opp_e2e_5,,s1,p1

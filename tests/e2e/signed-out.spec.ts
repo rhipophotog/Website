@@ -9,12 +9,18 @@ test.describe("signed out", () => {
     await expect(page.getByRole("button", { name: "Email me a sign-in link" })).toBeVisible();
   });
 
-  for (const path of ["/inbox", "/pipeline", "/contacts", "/calendar", "/settings"]) {
+  for (const path of ["/inbox", "/pipeline", "/contacts", "/contacts/new", "/contacts/import", "/calendar", "/settings"]) {
     test(`${path} requires sign-in and comes back after`, async ({ page }) => {
       await page.goto(path);
       await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(path)}$`));
     });
   }
+
+  test("contact exports need sign-in", async ({ request }) => {
+    const res = await request.get("/contacts/export", { maxRedirects: 0 });
+    expect(res.status()).toBe(307);
+    expect(res.headers()["location"]).toContain("/login");
+  });
 
   test("an expired link shows a clear error", async ({ page }) => {
     await page.goto("/auth/callback?code=bogus");
