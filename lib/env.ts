@@ -68,6 +68,10 @@ export const serverEnvSchema = publicEnvSchema.extend({
   // Public base URL for links in emails, e.g. https://crm.yourdomain.com. Vercel's production URL is used if unset.
   APP_URL: optionalSecret,
   VERCEL_PROJECT_PRODUCTION_URL: optionalSecret,
+  // Calendar (milestone 7): Google OAuth client, and the key that encrypts its tokens at rest.
+  GOOGLE_CLIENT_ID: optionalSecret,
+  GOOGLE_CLIENT_SECRET: optionalSecret,
+  TOKEN_ENCRYPTION_KEY: optionalSecret,
 });
 
 /** Base URL for links inside emails (unsubscribe, forms). */

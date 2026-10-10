@@ -23,6 +23,11 @@ export function resendProvider(apiKey: string, defaultFrom: string, fetchImpl: t
           html: message.html,
           reply_to: message.replyTo ? [message.replyTo] : undefined,
           headers: message.headers,
+          attachments: message.attachments?.map((a) => ({
+            filename: a.filename,
+            content: Buffer.from(a.content, "utf8").toString("base64"),
+            content_type: a.contentType,
+          })),
         }),
         signal: AbortSignal.timeout(15_000),
       });

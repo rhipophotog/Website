@@ -256,3 +256,56 @@ Results in the sandbox: **lint ✅, build ✅, Vitest 229/229 ✅** (including 1
 ### Open questions
 - The domain for sending, and the Resend setup (steps are in the chat).
 - `owner_name` defaults to "Hitesh". Change it in Studio settings.
+
+## Brand update ✅ (2026-10-10)
+- Applied BRAND.md: the Focus-rings logo, colour #1570EF, Manrope and Inter fonts, lucide icons, stage colour chips, and new app/PWA icons.
+- The app name now comes from `APP_NAME` in `lib/brand.ts`.
+
+## Milestone 7 — Calendar & booking ✅ (2026-10-10)
+
+### What was built
+- **Public booking pages** (`/book`, `/book/discovery`, `/book/consult`, `/book/engagement-planning`):
+  - **Picking a time:** the guest picks a day and a time, shown in their own time zone. Slots come from your weekly hours (Mon–Fri 10–6, Sat 10–2, Los Angeles time), minus days off, existing bookings and Google busy times, with a 15-minute buffer, 12 hours' minimum notice, a 60-day horizon and a maximum of 4 per day.
+  - **Guest details:** name, partner, email, phone, wedding date and notes. SMS consent is stored with the exact text shown.
+  - **Protection:** honeypot, Turnstile, a rate limit, and a server-side re-check of the slot.
+  - **Double-booking is impossible:** a database constraint enforces it, so two people booking the same slot at the same moment can't both get it.
+  - **Effect on contacts:** a booking creates or matches the contact and moves an early card (New inquiry or Contacted) to **Consult scheduled**, or creates a card there.
+- **Confirmation email** (template `consult_confirm`): date, time and location, an `.ics` calendar invite, and a private **manage link** (`/book/manage/…`) where the guest can reschedule or cancel. You get an alert.
+- **Google Calendar** (optional; Settings → Calendar → Connect):
+  - Busy times on your Google Calendar block slots, and every booking is added to it. Moves and cancellations sync.
+  - Tokens are stored encrypted (AES-256-GCM) and are never readable from the browser.
+  - If Google is down, bookings still work.
+- **CRM calendar** (`/calendar`):
+  - An agenda of upcoming calls grouped by day.
+  - **"How did these go?"** lists past calls with **Completed** and **No-show** buttons.
+  - Mark confirmed, and cancel with an optional "email them".
+- **Book by hand:** **+ Book a call** on a contact page lets you choose the type, date and time (studio time), with an optional confirmation email.
+- **Contact page:** a "Calls & consults" card, and appointment events in the timeline.
+- **Settings → Calendar:**
+  - Weekly hours, time zone, buffer, notice, horizon, daily maximum, slot step and Zoom link.
+  - Days off.
+  - Edit and add appointment types.
+  - Booking links.
+  - Google connect and disconnect.
+- **Template link:** `{{booking_link}}` now defaults to your own `/book/discovery` page.
+- **Events for Milestone 8:** `appointment.booked`, `.confirmed`, `.completed`, `.no_show`, `.cancelled` and `.rescheduled` go to the event outbox. The 24-hour and 1-hour reminders and the no-show follow-up are workflows, so they come in M8.
+- **Database** (`20261014000000_calendar.sql`):
+  - Tables: `availability_settings`, `blocked_dates`, `appointment_types`, `appointments`, `google_calendar_connection`.
+  - Functions (server only): `book_appointment`, guest cancel/reschedule, `busy_ranges`, `recent_bookings`.
+  - Access rules: everyone signed in can read; only the owner edits settings.
+
+### Fixed along the way
+- The `/book` index page wasn't public; only `/book/…` was.
+- Semicolons weren't escaped in calendar invites.
+
+Results in the sandbox: **lint ✅, build ✅, Vitest 270/270 ✅** (12 new database tests: double-booking, dedupe, stage move, consent, token privacy, permissions; 26 new unit tests: time zones/DST, slots, invites, signing, encryption, Google with mocked HTTP, OAuth state), **Playwright 62 passed, 16 skipped** (need local Supabase).
+
+### How to try it
+1. Run `supabase/migrations/20261014000000_calendar.sql` in the SQL Editor.
+2. Go to **Settings → Calendar**, add your Zoom link and check the hours.
+3. Open `/book/discovery` in a private window and book yourself. Then look at `/calendar` and the contact's page.
+4. Optional: set up Google Calendar (steps in the chat), then press **Connect Google Calendar**.
+
+### Open questions
+- Should no-shows be able to rebook straight away, or after a delay? Currently they can rebook straight away.
+- The Google Cloud OAuth app stays "unverified" (only you connect it, so that's fine). Publish it to "In production" so tokens don't expire after 7 days.

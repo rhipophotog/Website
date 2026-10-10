@@ -2,7 +2,7 @@
 const PUBLIC_PREFIXES = [
   "/login",
   "/auth/",
-  "/book/", // public booking pages (milestone 7)
+  "/book", // public booking pages and manage links (milestone 7)
   "/f/", // hosted inquiry forms (milestone 4)
   "/api/webhooks/", // provider webhooks verify their own signatures
   "/u/", // signed unsubscribe links

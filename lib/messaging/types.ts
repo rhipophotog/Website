@@ -10,6 +10,8 @@ export type OutboundEmail = {
   replyTo?: string;
   /** Extra headers, e.g. In-Reply-To / References for threading, List-Unsubscribe. */
   headers?: Record<string, string>;
+  /** Small attachments such as a calendar invite. Content is plain text or base64. */
+  attachments?: { filename: string; content: string; contentType?: string }[];
   /** `run_id:step_id` for workflow sends, or a message id for one-off sends. */
   idempotencyKey: string;
 };

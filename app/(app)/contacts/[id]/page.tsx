@@ -1,3 +1,4 @@
+import { withStudioDefaults } from "@/lib/messaging/studio";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -42,6 +43,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
     { data: stages },
     { data: templates },
     { data: settings },
+    { data: appointments },
   ] = await Promise.all([
     supabase.from("contact_tags").select("tag_id, tags(name)").eq("contact_id", id),
     supabase.from("opportunities").select("*").eq("contact_id", id).order("created_at", { ascending: false }),
@@ -56,6 +58,12 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
     supabase.from("stages").select("key, name"),
     supabase.from("templates").select("key, name, subject, body, category").eq("channel", "email").order("name"),
     supabase.from("studio_settings").select("*").maybeSingle(),
+    supabase
+      .from("appointments")
+      .select("id, starts_at, status, type:appointment_types(name)")
+      .eq("contact_id", id)
+      .order("starts_at", { ascending: false })
+      .limit(20),
   ]);
 
   const stageName = new Map((stages ?? []).map((s) => [s.key as string, s.name as string]));
@@ -73,7 +81,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
     : contact.dnd_email
       ? "This contact is marked Do not email (they bounced, complained or asked not to be emailed)."
       : null;
-  const context = buildMergeContext({ contact, opportunity: opportunities?.[0] ?? null, settings: settings ?? {} });
+  const context = buildMergeContext({ contact, opportunity: opportunities?.[0] ?? null, settings: withStudioDefaults(settings) });
 
   return (
     <>
@@ -194,6 +202,25 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
             )}
           </Card>
 
+          <Card title="Calls & consults" actions={<Link href={`/calendar/new?contact=${id}`} className="text-sm font-medium text-accent underline">+ Book a call</Link>}>
+            {(appointments ?? []).length === 0 ? (
+              <p className="text-sm text-muted">No calls booked.</p>
+            ) : (
+              <ul className="divide-y divide-line text-sm">
+                {(appointments as unknown as { id: string; starts_at: string; status: string; type: { name: string } | null }[]).map((a) => (
+                  <li key={a.id} className="flex items-center justify-between gap-3 py-2">
+                    <span className="tabular">
+                      {a.type?.name} · {formatInTimeZone(a.starts_at, user.timeZone, { dateStyle: "medium", timeStyle: "short" })}
+                    </span>
+                    <Pill tone={a.status === "cancelled" || a.status === "no_show" ? "danger" : a.status === "completed" ? "neutral" : "accent"}>
+                      {APPOINTMENT_STATUS[a.status] ?? a.status}
+                    </Pill>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
           <Card title="Conversation">
             <div id="conversation">
               <Conversation
@@ -253,6 +280,14 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
+const APPOINTMENT_STATUS: Record<string, string> = {
+  booked: "Booked",
+  confirmed: "Confirmed",
+  completed: "Completed",
+  no_show: "No-show",
+  cancelled: "Cancelled",
+};
+
 function who(person: { full_name: string | null; email: string } | null) {
   return person?.full_name ?? person?.email ?? "Someone";
 }
@@ -287,6 +322,13 @@ function describe(a: Activity, stageName: Map<string, string>): string {
       return `New inquiry via ${
         { website: "the website form", meta_ads: "a Meta lead ad", google_ads: "a Google Ads lead form" }[String(d.source)] ?? String(d.source)
       }${d.campaign ? ` (${d.campaign})` : ""}`;
+    case "appointment.booked":
+    case "appointment.confirmed":
+    case "appointment.completed":
+    case "appointment.no_show":
+    case "appointment.cancelled":
+    case "appointment.rescheduled":
+      return `${String(d.type ?? "call").replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase())} call ${APPOINTMENT_STATUS[a.kind.slice(12)]?.toLowerCase() ?? "rescheduled"}`;
     case "consent.recorded":
       return `${d.channel === "sms" ? "SMS" : "Email"} ${d.granted ? "consent recorded" : "opt-out recorded"}`;
     default:

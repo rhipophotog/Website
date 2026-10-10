@@ -27,7 +27,7 @@ export function StudioSettingsForm({ settings }: { settings: Settings }) {
       <Field label="Your name (signs emails as {{owner_name}})" name="owner_name" error={err.owner_name}>
         <input id="owner_name" name="owner_name" defaultValue={settings.owner_name} className={inputClass} />
       </Field>
-      {link("booking_link", "Booking link ({{booking_link}})", "Where couples book a call. Until the booking page exists (milestone 7), use Calendly or your inquiry form link.")}
+      {link("booking_link", "Booking link ({{booking_link}})", "Where couples book a call. Leave blank to use your own booking page (/book/discovery).")}
       {link("portfolio_link", "Portfolio link ({{portfolio_link}})", "Instagram, Pixieset or your gallery page")}
       {link("review_link", "Review link ({{review_link}})", "Your Google review link")}
       <fieldset className="space-y-2 rounded-lg border border-line p-3 text-sm">

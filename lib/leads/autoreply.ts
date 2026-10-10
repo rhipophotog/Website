@@ -1,3 +1,4 @@
+import { withStudioDefaults } from "@/lib/messaging/studio";
 import { APP_NAME } from "@/lib/brand";
 import { emailContact, notifyOwner } from "@/lib/messaging/email";
 import { buildMergeContext } from "@/lib/messaging/render";
@@ -36,7 +37,7 @@ export async function afterLeadCaptured(admin: AdminClient, result: CaptureResul
     body: template.body,
     category: template.category,
     templateKey: "inquiry_autoreply",
-    context: buildMergeContext({ contact, opportunity, settings: settings ?? {} }),
+    context: buildMergeContext({ contact, opportunity, settings: withStudioDefaults(settings) }),
     idempotencyKey: `autoreply:${result.submission_id}`,
   });
   if (outcome.status === "failed") console.error("[autoreply] failed", outcome.error);

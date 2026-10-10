@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { Notice } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { buildMergeContext } from "@/lib/messaging/render";
+import { withStudioDefaults } from "@/lib/messaging/studio";
 import { createClient } from "@/lib/supabase/server";
 import { saveTemplate } from "../actions";
 import { TemplateForm } from "./template-form";
@@ -25,7 +26,7 @@ export default async function TemplatePage({ params }: PageProps<"/settings/temp
   const sample = buildMergeContext({
     contact: { first_name: "Priya", partner_name: "Rohan" },
     opportunity: { event_dates: [{ date: "2027-06-14" }], venue: "Oak Hall, Fresno" },
-    settings: settings ?? {},
+    settings: withStudioDefaults(settings),
   });
 
   return (

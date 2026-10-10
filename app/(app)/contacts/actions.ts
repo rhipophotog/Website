@@ -1,5 +1,6 @@
 "use server";
 
+import { withStudioDefaults } from "@/lib/messaging/studio";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -309,7 +310,7 @@ export async function sendEmailToContact(contactId: string, _prev: FormState, fo
     category: (template.data?.category as "transactional" | "marketing" | undefined) ?? "transactional",
     templateKey: parsed.data.template_key || null,
     inReplyTo: parsed.data.in_reply_to || null,
-    context: buildMergeContext({ contact, opportunity, settings: settings ?? {} }),
+    context: buildMergeContext({ contact, opportunity, settings: withStudioDefaults(settings) }),
     authorId: user.id,
   });
 

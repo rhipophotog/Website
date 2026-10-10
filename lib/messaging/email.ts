@@ -31,6 +31,9 @@ export type EmailRequest = {
   inReplyTo?: string | null;
   /** The signed-in sender; null for automatic emails. */
   authorId?: string | null;
+  attachments?: { filename: string; content: string; contentType?: string }[];
+  /** Plain text appended after the rendered template (e.g. booking details). */
+  appendText?: string;
 };
 
 export type EmailOutcome =
@@ -57,7 +60,7 @@ export async function emailContact(db: Db, req: EmailRequest): Promise<EmailOutc
   }
 
   const subject = render(req.subject, req.context).slice(0, 300);
-  const text = render(req.body, req.context);
+  const text = render(req.body, req.context) + (req.appendText ? `\n\n${req.appendText.trim()}` : "");
   const headers: Record<string, string> = {};
   let footerText = "";
   let footerHtml = "";
@@ -81,6 +84,7 @@ export async function emailContact(db: Db, req: EmailRequest): Promise<EmailOutc
       html: textToHtml(text, footerHtml),
       replyTo: env.EMAIL_REPLY_TO ?? env.OWNER_NOTIFY_EMAIL,
       headers: Object.keys(headers).length ? headers : undefined,
+      attachments: req.attachments,
       idempotencyKey,
     });
   } catch (error) {
