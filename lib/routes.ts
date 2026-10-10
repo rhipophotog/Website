@@ -7,7 +7,7 @@ const PUBLIC_PREFIXES = [
   "/api/webhooks/", // provider webhooks verify their own signatures
 ];
 
-const PUBLIC_FILES = ["/manifest.webmanifest", "/icon.svg", "/apple-icon", "/favicon.ico", "/robots.txt"];
+const PUBLIC_FILES = ["/manifest.webmanifest", "/icon.svg", "/apple-icon", "/favicon.ico", "/robots.txt", "/embed.js"];
 
 export function isPublicPath(pathname: string): boolean {
   if (PUBLIC_FILES.includes(pathname)) return true;

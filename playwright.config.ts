@@ -25,6 +25,12 @@ export default defineConfig({
       APP_ENV: "test",
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321",
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "e2e-placeholder",
+      ...(process.env.SUPABASE_SERVICE_ROLE_KEY ? { SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY } : {}),
+      // Fixed test secrets so the webhook signature checks can be exercised.
+      META_APP_SECRET: "e2e-meta-secret",
+      META_VERIFY_TOKEN: "e2e-verify-token",
+      META_PAGE_ACCESS_TOKEN: "e2e-page-token",
+      GOOGLE_ADS_WEBHOOK_KEY: "e2e-google-key",
     },
   },
 });

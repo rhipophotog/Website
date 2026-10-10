@@ -14,17 +14,46 @@ const flag = z
   .default("false")
   .transform((v) => v === "true");
 
+/** Cloudflare's documented test keys: always pass. Used until real keys are set. */
+export const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
+export const TURNSTILE_TEST_SECRET_KEY = "1x0000000000000000000000000000000AA";
+
+const optionalSecret = z
+  .string()
+  .optional()
+  .transform((v) => v?.trim() || undefined);
+
 export const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
   NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: flag,
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z
+    .string()
+    .optional()
+    .transform((v) => v?.trim() || TURNSTILE_TEST_SITE_KEY),
 });
 
 export const serverEnvSchema = publicEnvSchema.extend({
   APP_ENV: appEnvSchema.default("development"),
   STUDIO_TIME_ZONE: z.string().default("America/Los_Angeles"),
-  // Only needed by admin scripts (owner bootstrap). Never sent to the browser.
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  // Server only. Used by the public inquiry form, lead webhooks and admin scripts. Never sent to the browser.
+  SUPABASE_SERVICE_ROLE_KEY: optionalSecret,
+  TURNSTILE_SECRET_KEY: z
+    .string()
+    .optional()
+    .transform((v) => v?.trim() || TURNSTILE_TEST_SECRET_KEY),
+  // Salt for hashing visitor IPs (rate limiting). Any random string.
+  LEAD_IP_SALT: z
+    .string()
+    .optional()
+    .transform((v) => v?.trim() || "rhipo-lead-ip"),
+  // Meta Lead Ads webhook
+  META_APP_SECRET: optionalSecret,
+  META_VERIFY_TOKEN: optionalSecret,
+  META_PAGE_ACCESS_TOKEN: optionalSecret,
+  META_GRAPH_VERSION: z.string().regex(/^v\d+\.\d+$/).default("v23.0"),
+  // Google Ads lead form webhook ("key" field in the Google Ads lead form settings)
+  GOOGLE_ADS_WEBHOOK_KEY: optionalSecret,
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
@@ -61,6 +90,7 @@ export function publicEnv(): PublicEnv {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED,
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
   });
   if (!result.success) {
     throw new Error(`Invalid public environment variables:\n${format(result.error)}`);

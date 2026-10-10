@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { filtersToQuery, parseFilters, searchTerm } from "@/lib/contacts/queries";
-import { consentSchema, contactFieldsSchema, quickAddExtrasSchema } from "@/lib/contacts/schema";
+import { consentSchema, contactFieldsSchema, contactFlagsSchema, quickAddExtrasSchema } from "@/lib/contacts/schema";
 
 describe("contactFieldsSchema", () => {
   it("normalises email and phone, blanks become null", () => {
@@ -58,5 +58,13 @@ describe("contact filters", () => {
   it("serialises only set filters", () => {
     expect(filtersToQuery({ q: "priya", tag: "", page: 1 })).toBe("?q=priya");
     expect(filtersToQuery({ stage: "booked", page: 3 })).toBe("?stage=booked&page=3");
+  });
+});
+
+describe("unticked checkboxes (not sent by the browser at all)", () => {
+  it("count as false on edit and quick add", () => {
+    expect(contactFlagsSchema.parse({})).toEqual({ email_marketing_consent: false, dnd_email: false, dnd_sms: false, stop_automations: false });
+    expect(contactFlagsSchema.parse({ dnd_sms: "on" }).dnd_sms).toBe(true);
+    expect(quickAddExtrasSchema.parse({}).create_opportunity).toBe(false);
   });
 });

@@ -15,6 +15,9 @@ const ADMIN_URL = process.env.TEST_DATABASE_URL ?? "postgresql://postgres:postgr
 
 export class SqlError extends Error {}
 
+/** Pass as the user id to run SQL as the server's service role (what route handlers use). */
+export const SERVICE = "service_role";
+
 function psql(url: string, sql: string): string {
   try {
     return execFileSync("psql", [url, "-X", "-q", "-A", "-t", "-v", "ON_ERROR_STOP=1"], {
@@ -38,7 +41,7 @@ export type TestDb = {
   url: string;
   /** Run SQL as the database superuser (bypasses RLS). Returns raw output. */
   admin(sql: string): string;
-  /** Run SQL as a signed-in user (`userId`) or as anon (`null`). Returns raw output of the last statement. */
+  /** Run SQL as a signed-in user (`userId`), as anon (`null`) or as the service role (`SERVICE`). Returns raw output of the last statement. */
   as(userId: string | null, sql: string): string;
   /** Like `as`, but wraps a SELECT and returns its rows as JSON. */
   rows<T = Record<string, unknown>>(userId: string | null, select: string): T[];
@@ -61,8 +64,13 @@ export function createTestDb(): TestDb {
   }
 
   const as = (userId: string | null, sql: string) => {
-    const claims = userId ? JSON.stringify({ sub: userId, role: "authenticated" }) : JSON.stringify({ role: "anon" });
-    const role = userId ? "authenticated" : "anon";
+    const service = userId === SERVICE;
+    const claims = service
+      ? JSON.stringify({ role: "service_role" })
+      : userId
+        ? JSON.stringify({ sub: userId, role: "authenticated" })
+        : JSON.stringify({ role: "anon" });
+    const role = service ? "service_role" : userId ? "authenticated" : "anon";
     return psql(url, `set role ${role};\nselect set_config('request.jwt.claims', '${claims}', false);\n${sql}`)
       .split("\n")
       .slice(1) // drop set_config's output line

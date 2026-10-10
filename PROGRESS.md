@@ -168,3 +168,46 @@ Results in the sandbox: **lint ✅, build ✅, Vitest 167/167 ✅** (including 1
 ### Open questions
 - Is browser-native dragging good enough on desktop, or should we add `@dnd-kit`?
 - The board shows up to 1,000 cards; filter by month beyond that.
+
+## Milestone 4 — Lead capture ✅ (2026-10-10)
+
+### What was built
+- **Hosted inquiry form** at `/f/inquiry` (public):
+  - Fields: names, partner, email, phone, wedding date, venue or city, wedding type, services, budget, how they heard, message.
+  - An **SMS consent checkbox**, unticked by default. Its exact wording comes from the `forms` table and is stored with each consent.
+  - A thank-you screen.
+  - "How did you hear about us" sets the contact's source (Instagram, referral, vendor…).
+- **Spam protection:**
+  - A hidden honeypot field; bots get a fake success.
+  - **Cloudflare Turnstile**, checked on the server. It uses Cloudflare's always-pass test keys until real keys are set.
+  - **Rate limit:** 5 submissions per 10 minutes per visitor, using a salted hash of the visitor's IP. The IP itself is never stored.
+- **Embed:** `<div id="rhipo-inquiry"></div><script src="<app>/embed.js" async></script>` works on any site builder. The frame resizes to fit.
+  - Only `/f/*` may be framed (`frame-ancestors *`). The rest of the app sends `frame-ancestors 'none'`, which replaces `X-Frame-Options`.
+- **Meta Lead Ads webhook** at `/api/webhooks/meta`:
+  - Responds to Meta's verify-token check.
+  - Checks the **X-Hub-Signature-256** signature.
+  - Fetches each lead from the Graph API and keeps the campaign and ad name.
+- **Google Ads lead form webhook** at `/api/webhooks/google-ads`: checks the shared key in constant time. Test leads are labelled.
+- **One path for every lead:** the `capture_lead()` database function, which only the server can call, does all of this in one transaction:
+  - Dedupe on email, then phone, filling blanks on an existing contact.
+  - Record SMS consent, only for the number they actually typed.
+  - Add a New inquiry card, unless they already have an active one.
+  - Store the submission, plus an internal note with what they wrote, and a "lead.captured" entry on the timeline.
+  - Add a **`lead.created`** event to `domain_events`, for the workflow engine in milestone 8.
+  - Webhook retries are ignored, by Meta lead id or Google lead id.
+- **Settings → Lead capture:** the form link, the embed snippet, webhook URLs, setup status and the latest leads.
+- The service-role client (`lib/supabase/admin.ts`) can only be imported by the form and webhook code; ESLint enforces it.
+
+### Fixed along the way
+- **Checkbox bug (Milestone 2):** an unticked checkbox sends nothing, and in Zod 4 a union containing `z.undefined()` still rejects a missing key. So **Edit contact** with any messaging switch unticked, and **Add contact** with "Add to pipeline" unticked, would have failed with "Check the highlighted fields". The checkbox fields are now `.optional()`, with tests for unticked boxes.
+
+### How to try it
+1. Run `supabase/migrations/20261012000000_lead_capture.sql` in the Supabase SQL Editor.
+2. In Vercel, add `SUPABASE_SERVICE_ROLE_KEY` (Supabase → Project Settings → API Keys → secret / service_role key). The form needs it to save leads.
+3. Open **Settings → Lead capture**, open the form link and send yourself a test inquiry. It should appear in Contacts, as a New inquiry card on the pipeline, and with SMS consent on the contact if you ticked the box.
+
+Results in the sandbox: **lint ✅, build ✅, Vitest 197/197 ✅** (including 11 database tests for capture_lead: dedupe, consent rules, retries, and that the public and signed-in users can't call it), **Playwright 38 passed, 12 skipped** (the signed-in journeys and a real form submission need local Supabase).
+
+### Open questions
+- Real Turnstile keys, and Meta and Google ad accounts, when you're ready (steps are in the chat).
+- `forms` is seeded with one form ("inquiry"); editing the consent wording in the app comes later. `domain_events` is a new table that isn't in SPEC §11.

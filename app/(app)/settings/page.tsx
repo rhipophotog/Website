@@ -38,6 +38,10 @@ export default async function SettingsPage() {
           <span className="font-medium">Pipeline stages</span>
           <span className="text-sm text-muted">Rename and reorder →</span>
         </Link>
+        <Link href="/settings/leads" className="mt-2 flex min-h-11 items-center justify-between rounded-xl border border-line bg-surface px-5 py-3">
+          <span className="font-medium">Lead capture</span>
+          <span className="text-sm text-muted">Inquiry form, embed, ad webhooks →</span>
+        </Link>
       </nav>
 
       <section className="max-w-2xl rounded-xl border border-line bg-surface p-5">

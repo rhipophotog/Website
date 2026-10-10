@@ -15,8 +15,11 @@ const optionalText = (max: number) =>
     .optional()
     .transform((v) => v ?? null);
 
+// .optional(): an unticked checkbox isn't sent at all, and in Zod 4 a missing key fails
+// unless the field itself is optional (z.undefined() inside a union isn't enough).
 const checkbox = z
-  .union([z.literal("on"), z.literal("true"), z.literal(""), z.null(), z.undefined()])
+  .union([z.literal("on"), z.literal("true"), z.literal(""), z.null()])
+  .optional()
   .transform((v) => v === "on" || v === "true");
 
 export const contactFieldsSchema = z
