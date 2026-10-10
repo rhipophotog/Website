@@ -5,6 +5,7 @@ const PUBLIC_PREFIXES = [
   "/book/", // public booking pages (milestone 7)
   "/f/", // hosted inquiry forms (milestone 4)
   "/api/webhooks/", // provider webhooks verify their own signatures
+  "/u/", // signed unsubscribe links
 ];
 
 const PUBLIC_FILES = ["/manifest.webmanifest", "/icon.svg", "/apple-icon", "/favicon.ico", "/robots.txt", "/embed.js"];

@@ -1,29 +1,11 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState } from "react";
 import { Field, FormMessage, inputClass, SubmitButton } from "@/components/form";
 import { CONSENT_SOURCES } from "@/lib/contacts/fields";
 import type { FormState } from "@/lib/contacts/schema";
 
 type Action = (state: FormState, formData: FormData) => Promise<FormState>;
-
-export function NoteForm({ action }: { action: Action }) {
-  const ref = useRef<HTMLFormElement>(null);
-  const [state, formAction] = useActionState<FormState, FormData>(async (prev, fd) => {
-    const result = await action(prev, fd);
-    if (result?.ok) ref.current?.reset();
-    return result;
-  }, null);
-  return (
-    <form ref={ref} action={formAction} className="space-y-2">
-      <textarea name="body" required rows={3} maxLength={5000} placeholder="Internal note: only the studio team sees this" aria-label="Note" className={`${inputClass} py-2`} />
-      <div className="flex items-center gap-3">
-        <SubmitButton variant="secondary">Add note</SubmitButton>
-        <FormMessage state={state} />
-      </div>
-    </form>
-  );
-}
 
 export function ConsentForm({ action }: { action: Action }) {
   const [state, formAction] = useActionState<FormState, FormData>(action, null);

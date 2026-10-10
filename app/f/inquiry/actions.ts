@@ -1,7 +1,9 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { serverEnv } from "@/lib/env";
+import { afterLeadCaptured } from "@/lib/leads/autoreply";
 import { captureLead } from "@/lib/leads/capture";
 import { HONEYPOT_FIELD, inquiryFormObject, inquirySchema, inquiryToLead } from "@/lib/leads/inquiry";
 import { clientIp, hashIp } from "@/lib/leads/security";
@@ -48,7 +50,8 @@ export async function submitInquiry(_prev: InquiryState, formData: FormData): Pr
   if (!form?.enabled) return { ok: false, message: "Sorry, we're not taking inquiries through this form right now." };
 
   try {
-    await captureLead(admin, inquiryToLead(parsed.data, form.sms_consent_text, ipHash));
+    const result = await captureLead(admin, inquiryToLead(parsed.data, form.sms_consent_text, ipHash));
+    after(() => afterLeadCaptured(admin, result, "website form"));
   } catch (error) {
     // No names, emails or phone numbers in logs (CLAUDE.md).
     console.error("[inquiry] capture failed", error instanceof Error ? error.message : error);

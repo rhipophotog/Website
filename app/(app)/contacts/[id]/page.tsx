@@ -8,8 +8,10 @@ import { CONSENT_SOURCES, EVENT_TYPES, LOST_REASONS, sourceLabel } from "@/lib/c
 import { formatPhone } from "@/lib/contacts/phone";
 import { createClient } from "@/lib/supabase/server";
 import { formatInTimeZone } from "@/lib/time";
-import { addNote, addTags, deleteContact, recordConsent, removeTag } from "../actions";
-import { ConsentForm, DeleteContactForm, NoteForm } from "./forms";
+import { buildMergeContext } from "@/lib/messaging/render";
+import { addNote, addTags, deleteContact, recordConsent, removeTag, sendEmailToContact } from "../actions";
+import { Conversation, type EmailTemplate, type ThreadMessage } from "./conversation";
+import { ConsentForm, DeleteContactForm } from "./forms";
 
 export const metadata: Metadata = { title: "Contact" };
 
@@ -19,8 +21,8 @@ const NOTICES: Record<string, string> = {
   partial: "Contact saved, but tags or the pipeline entry couldn't be added. Try again below.",
 };
 
-type Activity = { id: string; kind: string; data: Record<string, unknown>; at: string; actor: { full_name: string | null; email: string } | null };
-type Note = { id: string; body: string; created_at: string; author: { full_name: string | null; email: string } | null };
+type Person = { full_name: string | null; email: string };
+type Activity = { id: string; kind: string; data: Record<string, unknown>; at: string; actor: Person | null };
 
 export default async function ContactPage({ params, searchParams }: PageProps<"/contacts/[id]">) {
   const user = await requireUser();
@@ -31,13 +33,29 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   const { data: contact } = await supabase.from("contact_list").select("*").eq("id", id).maybeSingle();
   if (!contact) notFound();
 
-  const [{ data: tagLinks }, { data: opportunities }, { data: consents }, { data: activity }, { data: notes }, { data: stages }] = await Promise.all([
+  const [
+    { data: tagLinks },
+    { data: opportunities },
+    { data: consents },
+    { data: activity },
+    { data: messages },
+    { data: stages },
+    { data: templates },
+    { data: settings },
+  ] = await Promise.all([
     supabase.from("contact_tags").select("tag_id, tags(name)").eq("contact_id", id),
     supabase.from("opportunities").select("*").eq("contact_id", id).order("created_at", { ascending: false }),
     supabase.from("consents").select("channel, granted, source, text, at").eq("contact_id", id).order("at", { ascending: false }),
     supabase.from("contact_activity").select("id, kind, data, at, actor:users(full_name, email)").eq("contact_id", id).order("at", { ascending: false }).limit(100),
-    supabase.from("messages").select("id, body, created_at, author:users(full_name, email)").eq("contact_id", id).eq("channel", "note").order("created_at", { ascending: false }).limit(100),
+    supabase
+      .from("messages")
+      .select("id, channel, direction, subject, body, status, error, rfc_message_id, created_at, author:users(full_name, email)")
+      .eq("contact_id", id)
+      .order("created_at", { ascending: false })
+      .limit(200),
     supabase.from("stages").select("key, name"),
+    supabase.from("templates").select("key, name, subject, body, category").eq("channel", "email").order("name"),
+    supabase.from("studio_settings").select("*").maybeSingle(),
   ]);
 
   const stageName = new Map((stages ?? []).map((s) => [s.key as string, s.name as string]));
@@ -46,10 +64,16 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
   const tz = user.timeZone;
   const when = (iso: string) => formatInTimeZone(iso, tz, { dateStyle: "medium", timeStyle: "short" });
 
-  const timeline = [
-    ...((activity ?? []) as unknown as Activity[]).map((a) => ({ kind: "activity" as const, at: a.at, item: a })),
-    ...((notes ?? []) as unknown as Note[]).map((n) => ({ kind: "note" as const, at: n.created_at, item: n })),
-  ].sort((a, b) => b.at.localeCompare(a.at));
+  const timeline = (activity ?? []) as unknown as Activity[];
+  const thread: ThreadMessage[] = ((messages ?? []) as unknown as (Omit<ThreadMessage, "author"> & { author: Person | null })[])
+    .map((m) => ({ ...m, author: m.author ? who(m.author) : null }))
+    .reverse();
+  const emailBlocked = !contact.email
+    ? "Add an email address to this contact to send email."
+    : contact.dnd_email
+      ? "This contact is marked Do not email (they bounced, complained or asked not to be emailed)."
+      : null;
+  const context = buildMergeContext({ contact, opportunity: opportunities?.[0] ?? null, settings: settings ?? {} });
 
   return (
     <>
@@ -170,32 +194,36 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
             )}
           </Card>
 
-          <Card title="Timeline">
-            <div className="mb-5">
-              <NoteForm action={addNote.bind(null, id)} />
+          <Card title="Conversation">
+            <div id="conversation">
+              <Conversation
+                contactId={id}
+                messages={thread}
+                templates={(templates ?? []) as EmailTemplate[]}
+                context={context}
+                emailBlocked={emailBlocked}
+                sendEmail={sendEmailToContact.bind(null, id)}
+                addNote={addNote.bind(null, id)}
+                timeZone={tz}
+              />
             </div>
+          </Card>
+
+          <Card title="Timeline">
             <ol className="space-y-4">
-              {timeline.map((entry) =>
-                entry.kind === "note" ? (
-                  <li key={`n-${entry.item.id}`} className="rounded-lg border-l-4 border-accent bg-accent/5 p-3">
-                    <p className="whitespace-pre-wrap text-sm">{entry.item.body}</p>
-                    <p className="mt-1 text-xs text-muted">
-                      Note by {who(entry.item.author)} · {when(entry.at)}
+              {timeline.length === 0 && <li className="text-sm text-muted">Nothing yet.</li>}
+              {timeline.map((item) => (
+                <li key={item.id} className="flex gap-3 text-sm">
+                  <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-line" />
+                  <div>
+                    <p>{describe(item, stageName)}</p>
+                    <p className="text-xs text-muted">
+                      {item.actor ? `${who(item.actor)} · ` : ""}
+                      {when(item.at)}
                     </p>
-                  </li>
-                ) : (
-                  <li key={`a-${entry.item.id}`} className="flex gap-3 text-sm">
-                    <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-line" />
-                    <div>
-                      <p>{describe(entry.item, stageName)}</p>
-                      <p className="text-xs text-muted">
-                        {entry.item.actor ? `${who(entry.item.actor)} · ` : ""}
-                        {when(entry.at)}
-                      </p>
-                    </div>
-                  </li>
-                ),
-              )}
+                  </div>
+                </li>
+              ))}
             </ol>
           </Card>
 
@@ -255,6 +283,10 @@ function describe(a: Activity, stageName: Map<string, string>): string {
       return `Added to pipeline: ${stage(d.stage)}`;
     case "stage.changed":
       return `Moved from ${stage(d.from)} to ${stage(d.to)}`;
+    case "lead.captured":
+      return `New inquiry via ${
+        { website: "the website form", meta_ads: "a Meta lead ad", google_ads: "a Google Ads lead form" }[String(d.source)] ?? String(d.source)
+      }${d.campaign ? ` (${d.campaign})` : ""}`;
     case "consent.recorded":
       return `${d.channel === "sms" ? "SMS" : "Email"} ${d.granted ? "consent recorded" : "opt-out recorded"}`;
     default:

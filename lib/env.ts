@@ -54,7 +54,28 @@ export const serverEnvSchema = publicEnvSchema.extend({
   META_GRAPH_VERSION: z.string().regex(/^v\d+\.\d+$/).default("v23.0"),
   // Google Ads lead form webhook ("key" field in the Google Ads lead form settings)
   GOOGLE_ADS_WEBHOOK_KEY: optionalSecret,
+  // Email (milestone 5): Resend
+  RESEND_API_KEY: optionalSecret,
+  RESEND_WEBHOOK_SECRET: optionalSecret,
+  // "RHIPO Photography <hello@yourdomain.com>"
+  EMAIL_FROM: optionalSecret,
+  // Where client replies go. An address on a Resend receiving domain threads them into the app.
+  EMAIL_REPLY_TO: optionalSecret,
+  // The owner's own inbox: gets a copy of every client reply and new-lead alerts.
+  OWNER_NOTIFY_EMAIL: optionalSecret,
+  // Signs unsubscribe links. Falls back to a value derived from the service role key.
+  UNSUBSCRIBE_SECRET: optionalSecret,
+  // Public base URL for links in emails, e.g. https://crm.yourdomain.com. Vercel's production URL is used if unset.
+  APP_URL: optionalSecret,
+  VERCEL_PROJECT_PRODUCTION_URL: optionalSecret,
 });
+
+/** Base URL for links inside emails (unsubscribe, forms). */
+export function appUrl(env: ServerEnv = serverEnv()): string {
+  if (env.APP_URL) return env.APP_URL.replace(/\/$/, "");
+  if (env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return "http://localhost:3000";
+}
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

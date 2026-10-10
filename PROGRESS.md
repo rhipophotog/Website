@@ -211,3 +211,48 @@ Results in the sandbox: **lint ✅, build ✅, Vitest 197/197 ✅** (including 1
 ### Open questions
 - Real Turnstile keys, and Meta and Google ad accounts, when you're ready (steps are in the chat).
 - `forms` is seeded with one form ("inquiry"); editing the consent wording in the app comes later. `domain_events` is a new table that isn't in SPEC §11.
+
+## Milestone 5 — Email ✅ (2026-10-10)
+
+### What was built
+- **Conversation on every contact:** emails (in and out) and internal notes in one thread, newest at the bottom.
+  - Each email shows its status: Test, Sent, Delivered, Bounced, Marked as spam, Failed.
+  - A **composer** with a template picker, subject and body, and a live preview with the contact's details filled in.
+  - Replies keep the email thread intact in the client's mail app (In-Reply-To headers).
+  - Opening a contact marks their replies read.
+  - The Timeline card now shows activity only.
+- **Inbox** (`/inbox`): one row per conversation, latest first, with unread counts and **Needs reply** and **Unread** filters.
+- **Templates** (owner: Settings → Studio & email → Edit templates):
+  - **15 email and 10 SMS starter templates** from WORKFLOWS §3, written in the studio's voice. SMS are all under 160 characters, and the first one includes "Reply STOP to opt out".
+  - Merge fields `{{first_name}} {{partner_name}} {{event_date}} {{venue}} {{booking_link}} {{portfolio_link}} {{review_link}} {{owner_name}}`, with sensible fallbacks.
+  - Saving is refused if a merge field is mistyped.
+  - Live preview, plus an SMS length counter.
+- **Studio settings** (`/settings/studio`): your sign-off name and links, the **instant-reply switch**, an **emergency "pause all automatic messages"** switch (WORKFLOWS R6), and the email setup status.
+- **Instant reply (W1 step 1):**
+  - After a lead is captured (form, Meta or Google), the `inquiry_autoreply` email goes out after the response is sent, so it never slows the form. The owner gets a "New inquiry" alert.
+  - It honours the switches, do-not-email and stop-automations.
+  - It's idempotent per submission.
+- **Sending:**
+  - `lib/messaging/email.ts → emailContact()` is the only path to a contact. It checks do-not-email, skips marketing email for anyone not opted in, renders the template, and adds the unsubscribe footer plus `List-Unsubscribe` to marketing email.
+  - **Resend** is called over plain HTTPS with an `Idempotency-Key`, and only when `APP_ENV=production` with `RESEND_API_KEY` and `EMAIL_FROM` set. Anywhere else the email is saved as **Test (not sent)**.
+- **Receiving and delivery** (`/api/webhooks/resend`, with Svix signatures checked):
+  - `email.received`: the full email is fetched from Resend, quoted history stripped, and it's threaded onto the contact. Unknown senders become a new contact in New inquiry. A `message.received` event is raised (for WORKFLOWS R1), and a copy goes to `OWNER_NOTIFY_EMAIL`.
+  - `email.delivered`, `bounced`, `complained` and `failed` update the message status; it never moves backwards. Bounces and complaints switch on **Do not email**.
+- **Unsubscribe** (`/u/[token]`): a signed link with a confirm button, because mail scanners follow links. Unsubscribing records an email-consent "declined" entry.
+- **Database** (`20261013000000_email.sql`):
+  - New tables: `studio_settings`, `templates`.
+  - New `messages` columns: addresses, Message-ID / In-Reply-To, template, idempotency key, error, read_at, with unique idempotency and provider ids.
+  - Functions: `record_inbound_email`, `record_email_event` and `unsubscribe_contact` (server only), and `mark_conversation_read`.
+  - New view: `inbox_threads`.
+  - Members may record emails they sent as themselves, but never inbound messages or SMS.
+
+Results in the sandbox: **lint ✅, build ✅, Vitest 229/229 ✅** (including 15 database tests for email; the bounce-to-do-not-email rule was checked by breaking it on purpose), **Playwright 50 passed, 14 skipped** (the signed-in journeys need local Supabase).
+
+### How to try it
+1. Run `supabase/migrations/20261013000000_email.sql` in the SQL Editor.
+2. Fill in **Settings → Studio & email** (name and links).
+3. Email a contact. Until email is set up and `APP_ENV=production`, it shows as **Test (not sent)**.
+
+### Open questions
+- The domain for sending, and the Resend setup (steps are in the chat).
+- `owner_name` defaults to "Hitesh". Change it in Studio settings.

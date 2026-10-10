@@ -17,6 +17,8 @@ import {
   type FormState,
 } from "@/lib/contacts/schema";
 import { MERGEABLE_FIELDS } from "@/lib/contacts/fields";
+import { emailContact } from "@/lib/messaging/email";
+import { buildMergeContext } from "@/lib/messaging/render";
 import { createClient } from "@/lib/supabase/server";
 
 const idSchema = z.uuid();
@@ -271,4 +273,70 @@ export async function bulkAddToPipeline(_prev: FormState, formData: FormData): P
   revalidatePath("/pipeline");
   const skipped = contacts.length - toAdd.length;
   return { ok: true, message: `Added ${toAdd.length} to the pipeline${skipped ? ` (${skipped} were already in it)` : ""}.` };
+}
+
+// ---------------------------------------------------------------------------
+// Email from the contact page
+// ---------------------------------------------------------------------------
+
+const emailFormSchema = z.object({
+  subject: z.string().trim().min(1, "Add a subject.").max(300),
+  body: z.string().trim().min(1, "Write a message.").max(20_000),
+  template_key: z.string().regex(/^[a-z][a-z0-9_]*$/).optional().or(z.literal("")),
+  in_reply_to: z.string().max(500).optional().or(z.literal("")),
+});
+
+export async function sendEmailToContact(contactId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const { supabase, user } = await member();
+  const id = idSchema.parse(contactId);
+  const parsed = emailFormSchema.safeParse(formDataObject(formData));
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the email." };
+
+  const [{ data: contact }, { data: opportunity }, { data: settings }, template] = await Promise.all([
+    supabase.from("contacts").select("id, first_name, partner_name, email, dnd_email, email_marketing_consent").eq("id", id).single(),
+    supabase.from("opportunities").select("event_dates, venue, city").eq("contact_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("studio_settings").select("*").single(),
+    parsed.data.template_key
+      ? supabase.from("templates").select("category").eq("key", parsed.data.template_key).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  if (!contact) return { ok: false, message: "Contact not found." };
+
+  const outcome = await emailContact(supabase, {
+    contact,
+    subject: parsed.data.subject,
+    body: parsed.data.body,
+    category: (template.data?.category as "transactional" | "marketing" | undefined) ?? "transactional",
+    templateKey: parsed.data.template_key || null,
+    inReplyTo: parsed.data.in_reply_to || null,
+    context: buildMergeContext({ contact, opportunity, settings: settings ?? {} }),
+    authorId: user.id,
+  });
+
+  revalidatePath(`/contacts/${id}`);
+  revalidatePath("/inbox");
+  switch (outcome.status) {
+    case "sent":
+      return { ok: true, message: "Sent." };
+    case "test":
+      return { ok: true, message: "Saved as a test email: real sending starts once email is set up (production)." };
+    case "skipped":
+      return {
+        ok: false,
+        message: {
+          no_email: "This contact has no email address.",
+          dnd_email: "This contact is marked Do not email.",
+          marketing_opt_out: "They've opted out of marketing emails.",
+          duplicate: "That email was already sent.",
+        }[outcome.reason],
+      };
+    default:
+      return { ok: false, message: `Couldn't send: ${outcome.error}` };
+  }
+}
+
+export async function markConversationRead(contactId: string): Promise<void> {
+  const { supabase } = await member();
+  await supabase.rpc("mark_conversation_read", { p_contact_id: idSchema.parse(contactId) });
+  revalidatePath("/inbox");
 }

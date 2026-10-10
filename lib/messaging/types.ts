@@ -5,6 +5,11 @@ export type OutboundEmail = {
   subject: string;
   text: string;
   html?: string;
+  /** Defaults to EMAIL_FROM. */
+  from?: string;
+  replyTo?: string;
+  /** Extra headers, e.g. In-Reply-To / References for threading, List-Unsubscribe. */
+  headers?: Record<string, string>;
   /** `run_id:step_id` for workflow sends, or a message id for one-off sends. */
   idempotencyKey: string;
 };

@@ -5,8 +5,10 @@ import { emailProviderFor, smsProviderFor } from "./providers";
 import type { OutboundEmail, OutboundSms, SendResult } from "./types";
 
 /** The only way app code sends email. */
-export async function sendEmail(message: OutboundEmail, appEnv: AppEnv = serverEnv().APP_ENV): Promise<SendResult> {
-  return emailProviderFor(appEnv).send(message);
+export async function sendEmail(message: OutboundEmail, appEnv?: AppEnv): Promise<SendResult> {
+  const mode = appEnv ?? serverEnv().APP_ENV;
+  // Only production needs credentials; test/development always record.
+  return emailProviderFor(mode, mode === "production" ? serverEnv() : {}).send(message);
 }
 
 /** The only way app code sends SMS. Always checks canSendSms first. */

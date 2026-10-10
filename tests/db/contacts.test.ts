@@ -128,10 +128,14 @@ describe("messages (notes)", () => {
     expect(db.rows(ownerId, `select id from public.messages where id = '${note}'`)).toHaveLength(0);
   });
 
-  it("can't be used to fake email/SMS history or impersonate another author", () => {
+  it("can't be used to fake received messages, SMS history or impersonate another author", () => {
     const id = contact(teamId, "(first_name) values ('Fake msg')");
+    // Members may record emails they send themselves (milestone 5), but never inbound replies or SMS.
     expect(() =>
-      db.as(teamId, `insert into public.messages (contact_id, channel, direction, body) values ('${id}', 'email', 'out', 'hi');`),
+      db.as(teamId, `insert into public.messages (contact_id, channel, direction, body) values ('${id}', 'email', 'in', 'hi');`),
+    ).toThrow(/row-level security/);
+    expect(() =>
+      db.as(teamId, `insert into public.messages (contact_id, channel, direction, body) values ('${id}', 'sms', 'out', 'hi');`),
     ).toThrow(/row-level security/);
     expect(() =>
       db.as(teamId, `insert into public.messages (contact_id, channel, direction, body, author_id) values ('${id}', 'note', 'internal', 'x', '${ownerId}');`),

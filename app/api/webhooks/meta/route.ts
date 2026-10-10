@@ -1,5 +1,7 @@
+import { after } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { leadgenIds, metaLeadSchema, metaLeadToAdLead, metaWebhookSchema } from "@/lib/leads/ad-leads";
+import { afterLeadCaptured } from "@/lib/leads/autoreply";
 import { captureLead } from "@/lib/leads/capture";
 import { safeEqual, verifyMetaSignature } from "@/lib/leads/security";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -53,7 +55,8 @@ export async function POST(request: Request) {
       if (!res.ok) throw new Error(`Graph API ${res.status}`);
       const lead = metaLeadToAdLead(metaLeadSchema.parse(await res.json()));
       if (!lead.email && !lead.phone) throw new Error("lead has no email or phone");
-      await captureLead(admin, lead);
+      const result = await captureLead(admin, lead);
+      after(() => afterLeadCaptured(admin, result, "Meta lead ad"));
     } catch (error) {
       failed++;
       console.error("[meta webhook] lead failed", id, error instanceof Error ? error.message : error);

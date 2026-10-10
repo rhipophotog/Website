@@ -1,5 +1,6 @@
 import type { AppEnv } from "@/lib/env";
 import type { EmailProvider, SmsProvider } from "../types";
+import { resendProvider } from "./resend";
 import { testOutbox } from "./test-outbox";
 
 /**
@@ -10,8 +11,9 @@ import { testOutbox } from "./test-outbox";
 export class ProviderNotConfiguredError extends Error {
   constructor(channel: "email" | "sms") {
     super(
-      `No live ${channel} provider is configured yet ` +
-        `(email arrives in milestone 5, SMS in milestone 6).`,
+      channel === "email"
+        ? "Email isn't set up: add RESEND_API_KEY and EMAIL_FROM."
+        : "No live SMS provider is configured yet (SMS arrives in milestone 6).",
     );
     this.name = "ProviderNotConfiguredError";
   }
@@ -36,9 +38,13 @@ export const testSmsProvider: SmsProvider = {
   },
 };
 
-/** Live providers only exist when APP_ENV=production. Anything else records. */
-export function emailProviderFor(appEnv: AppEnv): EmailProvider {
+/**
+ * Live providers only exist when APP_ENV=production. Anything else records.
+ * Production without Resend credentials fails loudly rather than pretending to send.
+ */
+export function emailProviderFor(appEnv: AppEnv, creds: { RESEND_API_KEY?: string; EMAIL_FROM?: string } = {}): EmailProvider {
   if (appEnv !== "production") return testEmailProvider;
+  if (creds.RESEND_API_KEY && creds.EMAIL_FROM) return resendProvider(creds.RESEND_API_KEY, creds.EMAIL_FROM);
   throw new ProviderNotConfiguredError("email");
 }
 

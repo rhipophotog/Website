@@ -31,6 +31,7 @@ export default defineConfig({
       META_VERIFY_TOKEN: "e2e-verify-token",
       META_PAGE_ACCESS_TOKEN: "e2e-page-token",
       GOOGLE_ADS_WEBHOOK_KEY: "e2e-google-key",
+      RESEND_WEBHOOK_SECRET: `whsec_${Buffer.from("e2e-resend-secret").toString("base64")}`,
     },
   },
 });

@@ -1,5 +1,7 @@
+import { after } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { googleLeadSchema, googleLeadToAdLead } from "@/lib/leads/ad-leads";
+import { afterLeadCaptured } from "@/lib/leads/autoreply";
 import { captureLead } from "@/lib/leads/capture";
 import { safeEqual } from "@/lib/leads/security";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -28,7 +30,8 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   if (!admin) return new Response("Not configured", { status: 503 });
   try {
-    await captureLead(admin, lead);
+    const result = await captureLead(admin, lead);
+    after(() => afterLeadCaptured(admin, result, "Google Ads lead form"));
   } catch (error) {
     console.error("[google webhook] lead failed", error instanceof Error ? error.message : error);
     return new Response("Failed", { status: 500 });

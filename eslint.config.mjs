@@ -25,7 +25,7 @@ const eslintConfig = defineConfig([
   },
   {
     // The service-role client bypasses RLS: only the public form and lead webhooks may use it.
-    ignores: ["lib/supabase/admin.ts", "lib/leads/**", "app/f/**", "app/api/webhooks/**", "tests/**"],
+    ignores: ["lib/supabase/admin.ts", "lib/leads/**", "app/f/**", "app/u/**", "app/api/webhooks/**", "tests/**"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -33,7 +33,7 @@ const eslintConfig = defineConfig([
           patterns: [
             {
               group: ["@/lib/supabase/admin", "**/supabase/admin"],
-              message: "The service-role client is only for the public inquiry form and lead webhooks. Use @/lib/supabase/server.",
+              message: "The service-role client is only for public forms, unsubscribe links and webhooks. Use @/lib/supabase/server.",
             },
             {
               group: ["@/lib/messaging/providers", "@/lib/messaging/providers/*", "**/messaging/providers", "**/messaging/providers/*"],
