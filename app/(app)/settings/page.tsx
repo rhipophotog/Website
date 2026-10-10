@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -31,6 +32,13 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader title="Settings" description="Team, integrations and automations." />
+
+      <nav className="mb-4 max-w-2xl">
+        <Link href="/settings/pipeline" className="flex min-h-11 items-center justify-between rounded-xl border border-line bg-surface px-5 py-3">
+          <span className="font-medium">Pipeline stages</span>
+          <span className="text-sm text-muted">Rename and reorder →</span>
+        </Link>
+      </nav>
 
       <section className="max-w-2xl rounded-xl border border-line bg-surface p-5">
         <h2 className="font-semibold">Team</h2>

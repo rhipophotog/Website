@@ -48,28 +48,50 @@ export type ContactListRow = {
   created_at: string;
 };
 
-export async function listContacts(supabase: Supabase, filters: ContactFilters) {
-  let query = supabase
-    .from("contact_list")
-    .select("id, display_name, partner_name, email, phone, source, tag_names, stage_keys, first_event_date, created_at", {
-      count: "exact",
-    });
-
+/** Apply the list filters to any query on the contact_list view. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- PostgREST builder types differ per select
+function applyFilters<Q extends { or: any; contains: any; eq: any }>(query: Q, filters: ContactFilters): Q {
+  let q = query;
   const term = searchTerm(filters.q);
   if (term) {
     const digits = term.replace(/\D/g, "");
     const clauses = [`display_name.ilike."*${term}*"`, `partner_name.ilike."*${term}*"`, `email.ilike."*${term}*"`];
     if (digits.length >= 3) clauses.push(`phone.ilike."*${digits}*"`);
-    query = query.or(clauses.join(","));
+    q = q.or(clauses.join(","));
   }
-  if (filters.tag) query = query.contains("tag_names", [filters.tag]);
-  if (filters.source) query = query.eq("source", filters.source);
-  if (filters.stage) query = query.contains("stage_keys", [filters.stage]);
-  if (filters.month) query = query.contains("event_months", [filters.month]);
+  if (filters.tag) q = q.contains("tag_names", [filters.tag]);
+  if (filters.source) q = q.eq("source", filters.source);
+  if (filters.stage) q = q.contains("stage_keys", [filters.stage]);
+  if (filters.month) q = q.contains("event_months", [filters.month]);
+  return q;
+}
 
+export async function listContacts(supabase: Supabase, filters: ContactFilters) {
+  const query = applyFilters(
+    supabase
+      .from("contact_list")
+      .select("id, display_name, partner_name, email, phone, source, tag_names, stage_keys, first_event_date, created_at", {
+        count: "exact",
+      }),
+    filters,
+  );
   const from = (filters.page - 1) * PAGE_SIZE;
   const { data, count, error } = await query.order("created_at", { ascending: false }).range(from, from + PAGE_SIZE - 1);
   return { rows: (data ?? []) as ContactListRow[], count: count ?? 0, error };
+}
+
+export const BULK_LIMIT = 2000;
+
+/** Every contact matching the filters (up to BULK_LIMIT), for bulk actions. */
+export async function matchingContacts(supabase: Supabase, filters: ContactFilters) {
+  const { data, error } = await applyFilters(
+    supabase.from("contact_list").select("id, first_name, partner_name, source, stage_keys"),
+    filters,
+  )
+    .order("created_at")
+    .limit(BULK_LIMIT);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as { id: string; first_name: string | null; partner_name: string | null; source: string | null; stage_keys: string[] }[];
 }
 
 /** Find-or-create tags by name (case-insensitive). Returns their ids. */

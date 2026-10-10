@@ -9,6 +9,7 @@ import { filtersToQuery, listContacts, PAGE_SIZE, parseFilters, type ContactFilt
 import { createClient } from "@/lib/supabase/server";
 import { formatInTimeZone } from "@/lib/time";
 import { deleteView } from "./actions";
+import { BulkAddForm } from "./bulk-add-form";
 import { SaveViewForm } from "./save-view-form";
 
 export const metadata: Metadata = { title: "Contacts" };
@@ -140,6 +141,9 @@ export default async function ContactsPage({ searchParams }: PageProps<"/contact
       </form>
 
       {filtered && <SaveViewForm filters={filters} />}
+      {filtered && user.role === "owner" && count > 0 && (
+        <BulkAddForm filters={filters} count={count} stages={(stages ?? []).map((s) => ({ key: s.key as string, name: s.name as string }))} />
+      )}
 
       {error ? (
         <Notice tone="danger">Couldn&apos;t load contacts. Try again.</Notice>

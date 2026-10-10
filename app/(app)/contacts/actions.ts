@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { findExisting } from "@/lib/contacts/import-server";
-import { defaultPipelineId, ensureTagIds, filtersSchema, tagContacts } from "@/lib/contacts/queries";
+import { defaultPipelineId, ensureTagIds, filtersSchema, matchingContacts, tagContacts } from "@/lib/contacts/queries";
 import {
   consentSchema,
   contactFieldsSchema,
@@ -236,4 +236,39 @@ export async function deleteView(viewId: string): Promise<void> {
   const { supabase } = await member();
   await supabase.from("saved_views").delete().eq("id", idSchema.parse(viewId));
   revalidatePath("/contacts");
+}
+
+// ---------------------------------------------------------------------------
+// Bulk add to pipeline (owner): every contact matching the current filters
+// ---------------------------------------------------------------------------
+
+export async function bulkAddToPipeline(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { supabase } = await owner();
+  const filters = filtersSchema.parse({ ...formDataObject(formData), page: 1 });
+  const stageKey = z.string().regex(/^[a-z][a-z0-9_]*$/).safeParse(formData.get("stage_key"));
+  if (!stageKey.success || stageKey.data === "lost") return { ok: false, message: "Pick a stage (not Lost)." };
+
+  const contacts = await matchingContacts(supabase, filters);
+  // Skip anyone already in the pipeline, so running it twice doesn't create duplicates.
+  const toAdd = contacts.filter((c) => c.stage_keys.length === 0);
+  if (toAdd.length === 0) return { ok: true, message: "Everyone matching is already in the pipeline." };
+
+  const pipeline_id = await defaultPipelineId(supabase);
+  for (let i = 0; i < toAdd.length; i += 500) {
+    const { error } = await supabase.from("opportunities").insert(
+      toAdd.slice(i, i + 500).map((c) => ({
+        contact_id: c.id,
+        pipeline_id,
+        stage_key: stageKey.data,
+        couple_names: [c.first_name, c.partner_name].filter(Boolean).join(" & ") || null,
+        source: c.source,
+      })),
+    );
+    if (error) return { ok: false, message: `Added ${i} before an error. Try again; already-added contacts are skipped.` };
+  }
+
+  revalidatePath("/contacts");
+  revalidatePath("/pipeline");
+  const skipped = contacts.length - toAdd.length;
+  return { ok: true, message: `Added ${toAdd.length} to the pipeline${skipped ? ` (${skipped} were already in it)` : ""}.` };
 }

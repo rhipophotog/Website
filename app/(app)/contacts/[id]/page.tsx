@@ -139,7 +139,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
         </div>
 
         <div className="space-y-4 lg:col-span-2">
-          <Card title="Weddings / opportunities">
+          <Card title="Weddings / opportunities" actions={<Link href={`/pipeline/new?contact=${id}`} className="text-sm font-medium text-accent underline">+ Add to pipeline</Link>}>
             {(opportunities ?? []).length === 0 ? (
               <p className="text-sm text-muted">Not in the pipeline.</p>
             ) : (
@@ -149,7 +149,7 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                   return (
                     <li key={o.id} className="py-3 first:pt-0 last:pb-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{o.couple_names ?? contact.display_name}</span>
+                        <Link href={`/pipeline/${o.id}`} className="font-medium underline">{o.couple_names ?? contact.display_name}</Link>
                         <Pill tone={o.stage_key === "lost" ? "danger" : "accent"}>{stageName.get(o.stage_key) ?? o.stage_key}</Pill>
                         {o.status === "lost" && o.lost_reason && <Pill tone="danger">{LOST_REASONS.find((r) => r.key === o.lost_reason)?.label}</Pill>}
                       </div>
@@ -168,7 +168,6 @@ export default async function ContactPage({ params, searchParams }: PageProps<"/
                 })}
               </ul>
             )}
-            <p className="mt-3 text-xs text-muted">The pipeline board and opportunity editing arrive in milestone 3.</p>
           </Card>
 
           <Card title="Timeline">

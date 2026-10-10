@@ -127,3 +127,44 @@ Results in the sandbox: **lint ✅, build ✅, Vitest 144/144 ✅** (unit tests,
 - **Cause:** the import actions checked each row with `z.record(z.enum(...))`. In Zod 4 that requires *every* field to be present, so every real CSV was rejected at the check step. Nothing was written.
 - **Fix:** switched to `z.partialRecord`. The checks moved to `lib/contacts/import-schemas.ts`, and a new `tests/unit/import-schemas.test.ts` feeds real GoHighLevel-shaped rows through the server's checks.
 - The check step now shows a readable reason when it fails, such as "the database update wasn't run", instead of a generic error.
+
+## Milestone 3 — Pipeline board ✅ (2026-10-10)
+
+### What was built
+- **Board** (`/pipeline`):
+  - One column per stage, showing count and total value. Cards show the couple, first event date, venue, value, source, assignee and time in stage.
+  - Soonest weddings come first.
+  - **Lost and Cold** sit in a collapsed column ("Show").
+  - Filters for event month, source and assignee ("Me" included).
+  - Columns snap-scroll sideways on a phone.
+- **Moving cards:**
+  - **On desktop:** drag and drop, using the browser's built-in dragging. No new dependency; `@dnd-kit` wasn't approved yet.
+  - **On every device:** a "Move to…" picker on each card.
+  - Moves show immediately and roll back with a message if the server refuses.
+  - **Lost asks for a reason** in a dialog.
+- **Opportunity page** (`/pipeline/[id]`):
+  - Edit stage (with lost reason), couple names, wedding type, venue and city.
+  - **Multiple named event days** (Haldi, Mehndi, Sangeet, Ceremony, Reception… suggested), sorted by date.
+  - Services (photo, video, drone, album), value, source, assignee and notes.
+  - The owner can remove an opportunity, which keeps the contact.
+- **Add to pipeline** from a contact page (`/pipeline/new?contact=…`).
+- **Bulk add** (owner): on Contacts, filter (e.g. tag "status: scheduled call"), then "Add these N contacts to the pipeline" at a chosen stage. People already in the pipeline are skipped, so running it twice is safe.
+- **Stage settings** (owner, `/settings/pipeline`): rename any stage, and reorder the 9 main stages. Keys are shown and can't change.
+- **Database** (`20261011000000_pipeline.sql`):
+  - New columns `stages.is_won` and `opportunities.stage_changed_at`.
+  - **Status follows the stage automatically:** Booked through Delivered count as won, Lost as lost, everything else as open. Leaving Lost clears the reason.
+  - Stage keys and kinds can't be changed.
+  - Stages can't be deleted from the app.
+  - Event dates must be `[{name, date: YYYY-MM-DD}]`.
+  - New `pipeline_cards` view, which follows the same access rules as the underlying tables.
+  - Existing opportunities are brought in line with the status rule.
+
+### How to try it
+- **Hosted Supabase:** run `supabase/migrations/20261011000000_pipeline.sql` in the SQL Editor.
+- Then on Contacts, filter tag **status: scheduled call**, and use **Add these 18 contacts to the pipeline** at **Consult scheduled**.
+
+Results in the sandbox: **lint ✅, build ✅, Vitest 167/167 ✅** (including 10 new database tests on the stage rules, checked by breaking the rules on purpose and confirming the tests fail), **Playwright 30 passed, 10 skipped** (the signed-in journeys, which need local Supabase).
+
+### Open questions
+- Is browser-native dragging good enough on desktop, or should we add `@dnd-kit`?
+- The board shows up to 1,000 cards; filter by month beyond that.

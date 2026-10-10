@@ -9,7 +9,7 @@ test.describe("signed out", () => {
     await expect(page.getByRole("button", { name: "Email me a sign-in link" })).toBeVisible();
   });
 
-  for (const path of ["/inbox", "/pipeline", "/contacts", "/contacts/new", "/contacts/import", "/calendar", "/settings"]) {
+  for (const path of ["/inbox", "/pipeline", "/contacts", "/contacts/new", "/contacts/import", "/pipeline/new", "/settings/pipeline", "/calendar", "/settings"]) {
     test(`${path} requires sign-in and comes back after`, async ({ page }) => {
       await page.goto(path);
       await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(path)}$`));
