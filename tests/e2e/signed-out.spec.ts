@@ -22,6 +22,12 @@ test.describe("signed out", () => {
     await expect(page.getByText("That sign-in link has expired")).toBeVisible();
   });
 
+  test("a used-up link that lands on any page explains what happened", async ({ page }) => {
+    await page.goto("/?error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired");
+    await expect(page).toHaveURL(/\/login\?error=link$/);
+    await expect(page.getByText("That sign-in link has expired")).toBeVisible();
+  });
+
   test("Google sign-in stays hidden until it's configured", async ({ page }) => {
     await page.goto("/login");
     await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(0);

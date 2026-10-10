@@ -8,6 +8,17 @@ import { isPublicPath } from "@/lib/routes";
  * visitors to /login. Pages still re-check the user themselves; this is only the first gate.
  */
 export async function updateSession(request: NextRequest) {
+  // Supabase sends failed sign-in links (expired/used) back with ?error_code=..., on whatever path
+  // the Site URL points to. Show the login page's message instead of a silent redirect.
+  const authError = request.nextUrl.searchParams.get("error_code");
+  if (authError && request.nextUrl.pathname !== "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("error", "link");
+    return NextResponse.redirect(url);
+  }
+
   let response = NextResponse.next({ request });
   const env = publicEnv();
 

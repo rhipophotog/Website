@@ -420,3 +420,14 @@ enabled = false
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 skip_nonce_check = true
+
+# Sign-in emails include a 6-digit code as well as the link (see app/login/login-form.tsx).
+# For the hosted project, paste the same template into Authentication → Emails → Magic Link.
+[auth.email.template.magic_link]
+subject = "Your RHIPO Studio sign-in"
+content_path = "./supabase/templates/magic_link.html"
+
+# A brand-new user's first sign-in sends the confirmation email instead, so it gets the same template.
+[auth.email.template.confirmation]
+subject = "Your RHIPO Studio sign-in"
+content_path = "./supabase/templates/magic_link.html"

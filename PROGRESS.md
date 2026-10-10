@@ -65,3 +65,11 @@ Results in the build sandbox: **lint ✅, build ✅, Vitest 64/64 ✅, Playwrigh
   - `invites` is a new table not listed in SPEC §11.
 - **Inquiry embed**: `X-Frame-Options: DENY` is set on every page. Milestone 4 will relax it for `/f/*` so the inquiry form can be embedded on rhipophotography.com.
 - **Placeholder icon**: the "R" monogram should be replaced with the real logo.
+
+### Follow-up: sign-in fixes (2026-10-10)
+- **Sign in with a code.** The email now includes a 6-digit code (`supabase/templates/magic_link.html`), and the login page accepts it.
+  - This works when an email scanner has already used up the link.
+  - It keeps you inside the installed phone app; links open in the browser instead.
+  - **Hosted Supabase:** paste the template into Authentication → Emails, under both **Magic Link** and **Confirm signup**.
+- **Clear message for bad links.** A used or expired link that Supabase sends back to any page now goes to `/login`, which explains what happened, instead of silently redirecting.
+- Tests: Vitest 64/64, Playwright 20 passed, 4 skipped (signed-in tests, Supabase not available in the sandbox).

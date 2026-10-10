@@ -9,7 +9,7 @@ import { LoginForm } from "./login-form";
 export const metadata: Metadata = { title: "Sign in" };
 
 const ERRORS: Record<string, string> = {
-  link: "That sign-in link has expired or was already used. Request a new one.",
+  link: "That sign-in link has expired or was already used. Request a new one, then tap the link in the newest email only, or type in its code.",
   not_member: "This account isn't on the studio team. Ask the owner for an invite.",
 };
 

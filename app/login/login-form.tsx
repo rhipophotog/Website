@@ -1,12 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type Status = { kind: "idle" } | { kind: "sending" } | { kind: "sent"; email: string } | { kind: "error"; message: string };
+type Status =
+  | { kind: "idle" }
+  | { kind: "sending" }
+  | { kind: "sent"; email: string; verifying?: boolean; codeError?: string }
+  | { kind: "error"; message: string };
 
 export function LoginForm({ next, googleEnabled }: { next: string; googleEnabled: boolean }) {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const router = useRouter();
 
   const callbackUrl = () => {
     const url = new URL("/auth/callback", window.location.origin);
@@ -30,6 +36,24 @@ export function LoginForm({ next, googleEnabled }: { next: string; googleEnabled
     setStatus({ kind: "sent", email });
   }
 
+  /**
+   * The 6-digit code from the same email. Works when an email scanner has already used up the
+   * link, and keeps you inside the installed phone app (links open in the browser instead).
+   */
+  async function verifyCode(formData: FormData) {
+    if (status.kind !== "sent") return;
+    const token = String(formData.get("code") ?? "").replace(/\D/g, "");
+    if (token.length < 6) return;
+    setStatus({ ...status, verifying: true, codeError: undefined });
+    const { error } = await createClient().auth.verifyOtp({ email: status.email, token, type: "email" });
+    if (error) {
+      setStatus({ ...status, verifying: false, codeError: "That code is wrong or has expired. Check the newest email." });
+      return;
+    }
+    router.replace(next);
+    router.refresh();
+  }
+
   async function signInWithGoogle() {
     const { error } = await createClient().auth.signInWithOAuth({
       provider: "google",
@@ -40,13 +64,41 @@ export function LoginForm({ next, googleEnabled }: { next: string; googleEnabled
 
   if (status.kind === "sent") {
     return (
-      <div className="rounded-xl border border-line bg-surface p-5 text-center">
-        <p className="font-medium">Check your email</p>
-        <p className="mt-1 text-sm text-muted">
-          If <span className="text-ink">{status.email}</span> is on the studio team, a sign-in link is on its way.
+      <div className="rounded-xl border border-line bg-surface p-5">
+        <p className="text-center font-medium">Check your email</p>
+        <p className="mt-1 text-center text-sm text-muted">
+          If <span className="text-ink">{status.email}</span> is on the studio team, a sign-in email is on its way.
+          Tap the link, or enter the code from the email here.
         </p>
-        <button className="mt-4 text-sm text-accent underline" onClick={() => setStatus({ kind: "idle" })}>
-          Use a different email
+        <form action={verifyCode} className="mt-4 space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">Code</span>
+            <input
+              name="code"
+              required
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9 ]{6,12}"
+              placeholder="123456"
+              className="w-full rounded-lg border border-line bg-paper px-3 py-3 text-center text-lg tracking-[0.3em] outline-none focus:border-accent"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={status.verifying}
+            className="w-full rounded-lg bg-accent px-4 py-3 font-medium text-accent-ink disabled:opacity-60"
+          >
+            {status.verifying ? "Checking…" : "Sign in with code"}
+          </button>
+          {status.codeError && (
+            <p role="alert" className="text-sm text-danger">
+              {status.codeError}
+            </p>
+          )}
+        </form>
+        <p className="mt-4 text-center text-xs text-muted">Only the newest email works. Each new request cancels the previous one.</p>
+        <button className="mt-3 w-full text-sm text-accent underline" onClick={() => setStatus({ kind: "idle" })}>
+          Use a different email or send again
         </button>
       </div>
     );
