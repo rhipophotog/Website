@@ -68,9 +68,11 @@ export function LoginForm({ next, googleEnabled }: { next: string; googleEnabled
         <p className="text-center font-medium">Check your email</p>
         <p className="mt-1 text-center text-sm text-muted">
           If <span className="text-ink">{status.email}</span> is on the studio team, a sign-in email is on its way.
-          Tap the link, or enter the code from the email here.
+          Tap the link in the newest email, in this same browser.
         </p>
-        <form action={verifyCode} className="mt-4 space-y-3">
+        <details className="mt-4 text-sm" open={Boolean(status.codeError)}>
+          <summary className="cursor-pointer text-center text-muted">Email has a 6-digit code instead?</summary>
+        <form action={verifyCode} className="mt-3 space-y-3">
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Code</span>
             <input
@@ -96,6 +98,7 @@ export function LoginForm({ next, googleEnabled }: { next: string; googleEnabled
             </p>
           )}
         </form>
+        </details>
         <p className="mt-4 text-center text-xs text-muted">Only the newest email works. Each new request cancels the previous one.</p>
         <button className="mt-3 w-full text-sm text-accent underline" onClick={() => setStatus({ kind: "idle" })}>
           Use a different email or send again

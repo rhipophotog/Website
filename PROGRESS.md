@@ -70,6 +70,6 @@ Results in the build sandbox: **lint ✅, build ✅, Vitest 64/64 ✅, Playwrigh
 - **Sign in with a code.** The email now includes a 6-digit code (`supabase/templates/magic_link.html`), and the login page accepts it.
   - This works when an email scanner has already used up the link.
   - It keeps you inside the installed phone app; links open in the browser instead.
-  - **Hosted Supabase:** paste the template into Authentication → Emails, under both **Magic Link** and **Confirm signup**.
+  - **Hosted Supabase:** templates can only be edited once custom SMTP is set up. Until then the email has only a link, so the code field is folded away under "Email has a 6-digit code instead?". After SMTP is set up (milestone 5, or sooner), paste the template into Authentication → Emails, under both **Magic Link** and **Confirm signup**.
 - **Clear message for bad links.** A used or expired link that Supabase sends back to any page now goes to `/login`, which explains what happened, instead of silently redirecting.
 - Tests: Vitest 64/64, Playwright 20 passed, 4 skipped (signed-in tests, Supabase not available in the sandbox).
