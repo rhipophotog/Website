@@ -1,0 +1,68 @@
+import type { Metadata } from "next";
+import { PageHeader } from "@/components/page-header";
+import { requireUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { formatInTimeZone } from "@/lib/time";
+import { revokeInvite } from "./actions";
+import { InviteForm } from "./invite-form";
+
+export const metadata: Metadata = { title: "Settings" };
+
+export default async function SettingsPage() {
+  const user = await requireUser();
+
+  if (user.role !== "owner") {
+    return (
+      <>
+        <PageHeader title="Settings" />
+        <p className="rounded-xl border border-line bg-surface p-6 text-sm text-muted">
+          Settings are owner-only. Ask the studio owner if something needs changing.
+        </p>
+      </>
+    );
+  }
+
+  const supabase = await createClient();
+  const [{ data: members }, { data: invites }] = await Promise.all([
+    supabase.from("users").select("id, email, full_name, role").order("created_at"),
+    supabase.from("invites").select("id, email, role, created_at").is("accepted_at", null).order("created_at"),
+  ]);
+
+  return (
+    <>
+      <PageHeader title="Settings" description="Team, integrations and automations." />
+
+      <section className="max-w-2xl rounded-xl border border-line bg-surface p-5">
+        <h2 className="font-semibold">Team</h2>
+        <p className="mt-1 text-sm text-muted">The owner plus up to 2 team members. Sign-in is invite-only.</p>
+
+        <ul className="mt-4 divide-y divide-line">
+          {members?.map((m) => (
+            <li key={m.id} className="flex items-center justify-between py-3 text-sm">
+              <span className="truncate">
+                {m.full_name ?? m.email}
+                {m.full_name && <span className="ml-2 text-muted">{m.email}</span>}
+              </span>
+              <span className="rounded-full bg-line/70 px-2 py-0.5 text-xs capitalize">{m.role}</span>
+            </li>
+          ))}
+          {invites?.map((inv) => (
+            <li key={inv.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+              <span className="truncate text-muted">
+                {inv.email} · invited {formatInTimeZone(inv.created_at, user.timeZone, { dateStyle: "medium" })}
+              </span>
+              <form action={revokeInvite}>
+                <input type="hidden" name="id" value={inv.id} />
+                <button className="min-h-11 px-2 text-xs text-danger underline">Revoke</button>
+              </form>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-4 border-t border-line pt-4">
+          <InviteForm />
+        </div>
+      </section>
+    </>
+  );
+}
