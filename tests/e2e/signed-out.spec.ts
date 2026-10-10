@@ -16,6 +16,14 @@ test.describe("signed out", () => {
     });
   }
 
+  test("search engines are kept out of everything but the inquiry form", async ({ request }) => {
+    const robots = await request.get("/robots.txt");
+    expect(robots.status()).toBe(200);
+    const text = await robots.text();
+    expect(text).toContain("Allow: /f/");
+    expect(text).toContain("Disallow: /");
+  });
+
   test("contact exports need sign-in", async ({ request }) => {
     const res = await request.get("/contacts/export", { maxRedirects: 0 });
     expect(res.status()).toBe(307);
