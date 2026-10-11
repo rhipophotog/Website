@@ -6,6 +6,9 @@ const PUBLIC_PREFIXES = [
   "/f/", // hosted inquiry forms (milestone 4)
   "/api/webhooks/", // provider webhooks verify their own signatures
   "/u/", // signed unsubscribe links
+  "/welcome", // public home page (shown at / when signed out)
+  "/privacy",
+  "/terms",
 ];
 
 const PUBLIC_FILES = ["/manifest.webmanifest", "/icon.png", "/apple-icon.png", "/favicon.ico", "/robots.txt", "/embed.js"];

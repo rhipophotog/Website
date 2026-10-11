@@ -6,8 +6,8 @@ import { buildMergeContext } from "@/lib/messaging/render";
 import { withStudioDefaults } from "@/lib/messaging/studio";
 import { safeEqual } from "@/lib/leads/security";
 import { createAdminClient, type AdminClient } from "@/lib/supabase/admin";
-import { encrypt } from "./crypto";
-import { googleCalendar, type GoogleCreds, type StoredConnection } from "./google";
+import { decrypt, encrypt } from "./crypto";
+import { googleCalendar, revokeToken, type GoogleCreds, type StoredConnection } from "./google";
 import { buildIcs } from "./ics";
 import { derivedSecret, signId, verifySignedId } from "./signing";
 import { computeSlots, type Availability, type Busy, type Slot } from "./slots";
@@ -112,6 +112,18 @@ export async function googleClient(admin: AdminClient) {
       await admin.from("google_calendar_connection").update({ access_token_enc, access_token_expires_at: expiresAt.toISOString() }).eq("id", true);
     },
   });
+}
+
+/** Disconnect: revoke access at Google, then delete the stored tokens. */
+export async function disconnectGoogleCalendar(admin: AdminClient): Promise<void> {
+  const { data: conn } = await admin.from("google_calendar_connection").select("refresh_token_enc").maybeSingle();
+  if (!conn) return;
+  try {
+    await revokeToken(decrypt(conn.refresh_token_enc as string, tokenKey()));
+  } catch (error) {
+    console.error("[google] revoke failed", error instanceof Error ? error.message : error);
+  }
+  await admin.from("google_calendar_connection").delete().eq("id", true);
 }
 
 async function googleBusy(admin: AdminClient, from: Date, to: Date): Promise<Busy[]> {

@@ -72,6 +72,8 @@ export const serverEnvSchema = publicEnvSchema.extend({
   GOOGLE_CLIENT_ID: optionalSecret,
   GOOGLE_CLIENT_SECRET: optionalSecret,
   TOKEN_ENCRYPTION_KEY: optionalSecret,
+  // Google Search Console "HTML tag" verification code (content="…" only). Proves site ownership for the Google OAuth review.
+  GOOGLE_SITE_VERIFICATION: optionalSecret,
 });
 
 /** Base URL for links inside emails (unsubscribe, forms). */

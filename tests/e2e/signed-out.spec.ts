@@ -1,12 +1,23 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("signed out", () => {
-  test("the dashboard sends you to the login page", async ({ page }) => {
+  test("the home page explains the app publicly, and sign-in is one tap away", async ({ page }) => {
     await page.goto("/");
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("heading", { name: "RHIPO Studio", level: 1 })).toBeVisible();
+    await expect(page.getByText("How RHIPO Studio uses Google data")).toBeVisible();
+    await page.getByRole("link", { name: "Studio sign-in" }).click();
     await expect(page).toHaveURL(/\/login$/);
-    await expect(page.getByRole("heading", { name: "RHIPO Studio" })).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByRole("button", { name: "Email me a sign-in link" })).toBeVisible();
+  });
+
+  test("the privacy policy and terms are public and cover Google data", async ({ page }) => {
+    await page.goto("/privacy");
+    await expect(page.getByRole("heading", { name: "Privacy policy" })).toBeVisible();
+    await expect(page.getByText(/Limited Use requirements/)).toBeVisible();
+    await page.goto("/terms");
+    await expect(page.getByRole("heading", { name: "Terms of service" })).toBeVisible();
   });
 
   for (const path of ["/inbox", "/pipeline", "/contacts", "/contacts/new", "/contacts/import", "/pipeline/new", "/settings/pipeline", "/settings/studio", "/settings/templates", "/settings/leads", "/calendar", "/calendar/new", "/settings/calendar", "/settings"]) {

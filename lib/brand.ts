@@ -4,6 +4,8 @@
  */
 export const APP_NAME = "RHIPO Studio";
 export const STUDIO_NAME = "RHIPO Photography & Cinematography";
+/** Public contact for the privacy policy and terms. */
+export const STUDIO_CONTACT_EMAIL = "rhipo.photog@gmail.com";
 
 export const BRAND_COLORS = {
   primary600: "#1570EF",

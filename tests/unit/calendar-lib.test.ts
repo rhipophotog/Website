@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { bookingSchema } from "@/app/book/schema";
 import { decrypt, encrypt } from "@/lib/calendar/crypto";
-import { authUrl, emailFromIdToken, exchangeCode, googleCalendar, GOOGLE_SCOPES } from "@/lib/calendar/google";
+import { authUrl, emailFromIdToken, exchangeCode, googleCalendar, GOOGLE_SCOPES, revokeToken } from "@/lib/calendar/google";
 import { buildIcs } from "@/lib/calendar/ics";
 import { derivedSecret, signId, verifySignedId } from "@/lib/calendar/signing";
 
@@ -107,6 +107,14 @@ describe("google", () => {
     expect(calls.filter((c) => c.includes("oauth2"))).toHaveLength(1);
     expect(onRefresh).toHaveBeenCalledOnce();
     expect(decrypt((onRefresh.mock.calls[0] as unknown as [string])[0], "k")).toBe("fresh");
+  });
+
+  it("revokes the token at Google on disconnect", async () => {
+    const fetchImpl = vi.fn(async () => new Response(null, { status: 200 }));
+    await revokeToken("refresh", fetchImpl as never);
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://oauth2.googleapis.com/revoke");
+    expect(String(init.body)).toBe("token=refresh");
   });
 
   it("treats an already-deleted event as done and surfaces other errors", async () => {

@@ -53,6 +53,16 @@ export async function exchangeCode(creds: GoogleCreds, code: string, fetchImpl: 
   return { accessToken: t.access_token, refreshToken: t.refresh_token, expiresAt: new Date(Date.now() + (t.expires_in - 60) * 1000), email: emailFromIdToken(t.id_token) };
 }
 
+/** Revoke our access at Google (used on disconnect). Best effort: a token that's already invalid is fine. */
+export async function revokeToken(token: string, fetchImpl: typeof fetch = fetch): Promise<void> {
+  await fetchImpl("https://oauth2.googleapis.com/revoke", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ token }),
+    signal: AbortSignal.timeout(10_000),
+  });
+}
+
 /** The id_token comes straight from Google's token endpoint over TLS, so reading its payload is enough here. */
 export function emailFromIdToken(idToken: string | undefined): string | null {
   if (!idToken) return null;

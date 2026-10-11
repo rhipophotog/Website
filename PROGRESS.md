@@ -309,3 +309,13 @@ Results in the sandbox: **lint ✅, build ✅, Vitest 270/270 ✅** (12 new data
 ### Open questions
 - Should no-shows be able to rebook straight away, or after a delay? Currently they can rebook straight away.
 - The Google Cloud OAuth app stays "unverified" (only you connect it, so that's fine). Publish it to "In production" so tokens don't expire after 7 days.
+
+## Google OAuth verification pages ✅ (2026-10-11)
+- **Public home page:** signed-out visitors at `/` now see a page explaining the app, including how it uses Google data. They are no longer sent straight to the login page. Signed-in users still get the dashboard.
+- **Public `/privacy` and `/terms`:**
+  - The privacy policy covers client data, each Google scope and why it's needed, encrypted token storage, no sharing, selling or AI training, and the Limited Use statement.
+  - It also covers how to revoke access, the service providers, data retention, and how to request your data.
+  - The contact email is `STUDIO_CONTACT_EMAIL` in `lib/brand.ts`.
+- **Site verification:** set `GOOGLE_SITE_VERIFICATION` to the Search Console "HTML tag" code to prove site ownership without a DNS change.
+- **Disconnect:** disconnecting Google Calendar now also revokes the token at Google.
+- Results: lint ✅, build ✅, Vitest 275/275 ✅, Playwright 64 passed, 16 skipped.

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
+import { calendarAdmin, disconnectGoogleCalendar } from "@/lib/calendar/server";
 import { isValidTime } from "@/lib/calendar/time";
 import type { FormState } from "@/lib/contacts/schema";
 import { createClient } from "@/lib/supabase/server";
@@ -125,8 +126,8 @@ export async function saveAppointmentType(id: string | null, _prev: FormState, f
 export async function disconnectGoogle(): Promise<void> {
   const user = await owner();
   if (!user) return;
+  await disconnectGoogleCalendar(calendarAdmin());
   const supabase = await createClient();
-  await supabase.from("google_calendar_connection").delete().eq("id", true);
   await supabase.from("audit_log").insert({ action: "google_calendar.disconnected", entity: "google_calendar_connection" });
   revalidatePath(PATH);
 }

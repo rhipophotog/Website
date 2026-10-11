@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { isActive, isPublicPath, safeNextPath } from "@/lib/routes";
 
 describe("isPublicPath", () => {
-  it.each(["/login", "/auth/callback", "/book", "/book/discovery", "/book/manage/abc.def", "/f/inquiry", "/api/webhooks/twilio", "/manifest.webmanifest", "/brand/icon-192.png", "/apple-icon.png"])(
+  it.each(["/login", "/auth/callback", "/welcome", "/privacy", "/terms", "/book", "/book/discovery", "/book/manage/abc.def", "/f/inquiry", "/api/webhooks/twilio", "/manifest.webmanifest", "/brand/icon-192.png", "/apple-icon.png"])(
     "%s is public",
     (path) => expect(isPublicPath(path)).toBe(true),
   );
 
-  it.each(["/", "/contacts", "/settings", "/loginx", "/inbox/123", "/api/contacts", "/booking"])("%s needs sign-in", (path) =>
+  it.each(["/", "/contacts", "/settings", "/loginx", "/inbox/123", "/api/contacts", "/booking", "/privacyx"])("%s needs sign-in", (path) =>
     expect(isPublicPath(path)).toBe(false),
   );
 });
